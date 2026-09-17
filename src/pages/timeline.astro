@@ -1,0 +1,125 @@
+---
+import Layout from "../layouts/Layout.astro";
+import TimelineView from "../components/TimelineView.astro";
+import TimelinePopView from "../components/TimelinePopView.astro";
+import ArticleBrowser from "../components/ArticleBrowser.astro";
+---
+
+<Layout title="Timeline — IntelSarawak" description="Browse STEM developments in Sarawak day by day.">
+	<section class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
+		<div class="mx-auto max-w-6xl px-6 py-10">
+			<div class="flex items-start justify-between gap-6">
+				<div>
+					<h1 class="font-display text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
+						Timeline
+					</h1>
+					<p class="mt-2 max-w-2xl text-base text-slate-600 dark:text-slate-400">
+						Scroll through STEM developments day by day, starting from the most recent.
+					</p>
+				</div>
+
+				<div class="inline-flex shrink-0 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-black">
+					<button id="tlv-days-btn" type="button" aria-label="Day-by-day view" class="tlv-toggle-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+							<line x1="3" y1="12" x2="21" y2="12"></line>
+							<circle cx="6" cy="12" r="1.6" fill="currentColor" stroke="none"></circle>
+							<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"></circle>
+							<circle cx="18" cy="12" r="1.6" fill="currentColor" stroke="none"></circle>
+						</svg>
+						<span class="hidden sm:inline">Day</span>
+					</button>
+					<button id="tlv-pop-btn" type="button" aria-label="Coverflow view" class="tlv-toggle-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+							<rect x="7" y="3" width="10" height="14" rx="1.5"></rect>
+							<rect x="2" y="7" width="6" height="10" rx="1.5" opacity="0.5"></rect>
+							<rect x="16" y="7" width="6" height="10" rx="1.5" opacity="0.5"></rect>
+						</svg>
+						<span class="hidden sm:inline">Coverflow</span>
+					</button>
+					<button id="tlv-cards-btn" type="button" aria-label="Card view" class="tlv-toggle-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+							<rect x="3" y="3" width="8" height="8" rx="1.5"></rect>
+							<rect x="13" y="3" width="8" height="8" rx="1.5"></rect>
+							<rect x="3" y="13" width="8" height="8" rx="1.5"></rect>
+							<rect x="13" y="13" width="8" height="8" rx="1.5"></rect>
+						</svg>
+						<span class="hidden sm:inline">Cards</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section id="tlv-days-view" class="mx-auto max-w-6xl px-6 py-12">
+		<TimelineView />
+	</section>
+
+	<section id="tlv-pop-view" class="hidden py-12">
+		<TimelinePopView />
+	</section>
+
+	<section id="tlv-cards-view" class="hidden mx-auto max-w-6xl px-6 py-12">
+		<ArticleBrowser />
+	</section>
+</Layout>
+
+<style>
+	.tlv-toggle-btn {
+		color: var(--color-slate-500);
+	}
+	.tlv-toggle-btn:hover {
+		background-color: var(--color-slate-100);
+		color: var(--color-slate-700);
+	}
+	:global(.dark) .tlv-toggle-btn {
+		color: var(--color-slate-400);
+	}
+	:global(.dark) .tlv-toggle-btn:hover {
+		background-color: var(--color-slate-900);
+		color: var(--color-slate-200);
+	}
+	.tlv-toggle-btn.active {
+		background-color: var(--color-brand-600);
+		color: white;
+		box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.15);
+	}
+	:global(.dark) .tlv-toggle-btn.active {
+		background-color: var(--color-brand-500);
+		color: black;
+	}
+</style>
+
+<script>
+	type ViewName = "days" | "pop" | "cards";
+	const KEY = "sarawak-stem-timeline-view";
+
+	const buttons: Record<ViewName, HTMLElement> = {
+		days: document.getElementById("tlv-days-btn")!,
+		pop: document.getElementById("tlv-pop-btn")!,
+		cards: document.getElementById("tlv-cards-btn")!,
+	};
+	const views: Record<ViewName, HTMLElement> = {
+		days: document.getElementById("tlv-days-view")!,
+		pop: document.getElementById("tlv-pop-view")!,
+		cards: document.getElementById("tlv-cards-view")!,
+	};
+
+	function setView(view: ViewName) {
+		(Object.keys(views) as ViewName[]).forEach((v) => {
+			views[v].classList.toggle("hidden", v !== view);
+			buttons[v].classList.toggle("active", v === view);
+		});
+		localStorage.setItem(KEY, view);
+		// The pop view computes card scale from live layout geometry, which
+		// is wrong while its container is display:none -- recompute now that
+		// it's visible.
+		if (view === "pop") {
+			window.dispatchEvent(new Event("resize"));
+		}
+	}
+
+	(Object.keys(buttons) as ViewName[]).forEach((v) => buttons[v].addEventListener("click", () => setView(v)));
+
+	const stored = localStorage.getItem(KEY);
+	setView(stored === "pop" || stored === "cards" ? stored : "days");
+</script>

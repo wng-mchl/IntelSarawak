@@ -1,0 +1,169 @@
+---
+import { groupByDate, slugFor, formatDayLabel } from "../lib/articles";
+
+const groups = groupByDate();
+
+const payload = groups.map((g) => ({
+  date: g.date,
+  articles: g.articles.map((a) => ({
+    slug: slugFor(a),
+    title: a.title,
+    summary: a.summary,
+    image_url: a.image_url,
+  })),
+}));
+---
+
+<div>
+	<div class="relative flex items-center gap-3">
+		<button
+			id="tl-prev"
+			type="button"
+			aria-label="Earlier day"
+			class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-slate-600 shadow-sm transition hover:border-brand-400 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-700 dark:bg-black dark:text-slate-300 dark:hover:border-brand-600 dark:hover:text-brand-400"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M15 18l-6-6 6-6"></path></svg>
+		</button>
+
+		<div id="tl-track" class="flex snap-x snap-mandatory items-end gap-0 overflow-x-auto scroll-smooth border-b border-slate-200 py-6 dark:border-slate-800">
+			{groups.map((g) => (
+				<button type="button" class="tl-tick flex w-24 shrink-0 snap-center flex-col items-center gap-2" data-date={g.date}>
+					<span class="tl-tick-label text-base font-medium whitespace-nowrap text-slate-500 transition dark:text-slate-400">
+						{formatDayLabel(g.date)}
+					</span>
+					<span class="tl-tick-dot h-3 w-3 rounded-full bg-slate-300 transition dark:bg-slate-700"></span>
+				</button>
+			))}
+		</div>
+
+		<button
+			id="tl-next"
+			type="button"
+			aria-label="Later day"
+			class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-slate-600 shadow-sm transition hover:border-brand-400 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-40 dark:border-slate-700 dark:bg-black dark:text-slate-300 dark:hover:border-brand-600 dark:hover:text-brand-400"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M9 18l6-6-6-6"></path></svg>
+		</button>
+	</div>
+
+	<div id="tl-content" class="mt-10"></div>
+</div>
+
+<script type="application/json" id="timeline-data" set:html={JSON.stringify(payload)} />
+
+<style>
+	#tl-track {
+		scrollbar-width: none;
+	}
+	#tl-track::-webkit-scrollbar {
+		display: none;
+	}
+	.tl-tick.active .tl-tick-label {
+		color: var(--color-brand-600);
+		font-weight: 700;
+	}
+	:global(.dark) .tl-tick.active .tl-tick-label {
+		color: var(--color-brand-400);
+	}
+	.tl-tick.active .tl-tick-dot {
+		background-color: var(--color-brand-600);
+		width: 0.65rem;
+		height: 0.65rem;
+	}
+	:global(.dark) .tl-tick.active .tl-tick-dot {
+		background-color: var(--color-brand-400);
+	}
+</style>
+
+<script>
+	import { renderDayCardsGrid, el, type ArticleStub } from "../lib/domCardBuilder";
+
+	interface DateGroup {
+		date: string;
+		articles: ArticleStub[];
+	}
+
+	const dataEl = document.getElementById("timeline-data");
+	const groups: DateGroup[] = JSON.parse(dataEl?.textContent ?? "[]");
+	const byDate = new Map(groups.map((g) => [g.date, g.articles]));
+
+	const track = document.getElementById("tl-track")!;
+	const content = document.getElementById("tl-content")!;
+	const prevBtn = document.getElementById("tl-prev")!;
+	const nextBtn = document.getElementById("tl-next")!;
+	const ticks = Array.from(track.querySelectorAll<HTMLButtonElement>(".tl-tick"));
+
+	let activeIndex = ticks.length - 1;
+
+	function formatFullDate(key: string): string {
+		return new Date(`${key}T00:00:00+08:00`).toLocaleDateString("en-MY", {
+			weekday: "long",
+			day: "numeric",
+			month: "long",
+			year: "numeric",
+		});
+	}
+
+	function renderContent(date: string) {
+		const arts = byDate.get(date) ?? [];
+		const wrapper = el("div", {});
+		wrapper.append(
+			el("h2", { class: "font-display text-2xl font-semibold text-slate-900 dark:text-slate-100" }, formatFullDate(date)),
+			el("div", { class: "mt-5" }, renderDayCardsGrid(arts)),
+		);
+		content.replaceChildren(wrapper);
+	}
+
+	function setActive(index: number, { scroll = true }: { scroll?: boolean } = {}) {
+		index = Math.min(Math.max(0, index), ticks.length - 1);
+		activeIndex = index;
+
+		ticks.forEach((t, i) => t.classList.toggle("active", i === index));
+		renderContent(ticks[index].dataset.date!);
+
+		prevBtn.toggleAttribute("disabled", index === 0);
+		nextBtn.toggleAttribute("disabled", index === ticks.length - 1);
+
+		if (scroll) {
+			ticks[index].scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+		}
+	}
+
+	function closestTickToCenter(): number {
+		const trackRect = track.getBoundingClientRect();
+		const trackCenter = trackRect.left + trackRect.width / 2;
+		let best = 0;
+		let bestDist = Infinity;
+		ticks.forEach((t, i) => {
+			const r = t.getBoundingClientRect();
+			const center = r.left + r.width / 2;
+			const dist = Math.abs(center - trackCenter);
+			if (dist < bestDist) {
+				bestDist = dist;
+				best = i;
+			}
+		});
+		return best;
+	}
+
+	let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
+	track.addEventListener("scroll", () => {
+		clearTimeout(scrollTimeout);
+		scrollTimeout = setTimeout(() => {
+			const idx = closestTickToCenter();
+			if (idx !== activeIndex) setActive(idx, { scroll: false });
+		}, 80);
+	});
+
+	// Plain vertical wheel/trackpad input is left alone so the page always
+	// scrolls normally. Horizontal wheel input (shift+scroll, or a trackpad's
+	// sideways swipe) already scrolls this track natively, since it overflows
+	// horizontally -- no JS needed for that direction.
+	ticks.forEach((t, i) => t.addEventListener("click", () => setActive(i)));
+	prevBtn.addEventListener("click", () => setActive(activeIndex - 1));
+	nextBtn.addEventListener("click", () => setActive(activeIndex + 1));
+
+	// Default view: latest post, jump instantly (no animation) to the rightmost tick.
+	ticks[activeIndex]?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "center", block: "nearest" });
+	setActive(activeIndex, { scroll: false });
+</script>

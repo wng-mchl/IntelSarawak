@@ -1,0 +1,79 @@
+---
+import { slugFor, type Article } from "../lib/articles";
+
+interface Props {
+  articles: Article[];
+  origin: "top" | "bottom";
+}
+
+const { articles, origin } = Astro.props;
+const shown = articles.slice(0, 3);
+const moreCount = articles.length - 3;
+---
+
+<div class="tl2-poppable w-44 will-change-transform" style={`transform-origin: ${origin} center;`}>
+	{articles.length === 1 && (
+		<a
+			href={`/articles/${slugFor(articles[0])}/`}
+			class="tl2-hoverable group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-colors hover:border-brand-200 dark:border-slate-800 dark:bg-black dark:hover:border-brand-800"
+			data-title={articles[0].title}
+			data-excerpt={articles[0].excerpt}
+		>
+			{articles[0].image_url ? (
+				<img src={articles[0].image_url} alt="" loading="lazy" referrerpolicy="no-referrer" class="aspect-[3/2] w-full object-cover" />
+			) : (
+				<div class="aspect-[3/2] w-full bg-gradient-to-br from-brand-50 to-slate-100 dark:from-slate-900 dark:to-black" />
+			)}
+			<div class="p-2.5">
+				<p class="line-clamp-2 text-xs leading-snug font-semibold text-slate-900 dark:text-slate-100">{articles[0].title}</p>
+			</div>
+		</a>
+	)}
+
+	{articles.length === 2 && (
+		// Fixed to the same total height as the w-44 grid tile below (which
+		// ends up square, i.e. 11rem) so a 2-article day and a 3+ article day
+		// take up the same footprint -- each row gets an equal share via
+		// flex-1, and the thumbnail is sized off the row's own height
+		// (h-full + aspect-square) rather than a hardcoded width.
+		<div class="flex h-44 flex-col gap-1.5">
+			{articles.map((a, idx) => (
+				<a
+					href={`/articles/${slugFor(a)}/`}
+					class={`tl2-hoverable group flex flex-1 items-stretch gap-2 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors hover:border-brand-200 dark:border-slate-800 dark:bg-black dark:hover:border-brand-800 ${idx % 2 === 1 ? "flex-row-reverse" : ""}`}
+					data-title={a.title}
+					data-excerpt={a.excerpt}
+				>
+					{a.image_url ? (
+						<img src={a.image_url} alt="" loading="lazy" referrerpolicy="no-referrer" class="aspect-square h-full shrink-0 object-cover" />
+					) : (
+						<div class="aspect-square h-full shrink-0 bg-gradient-to-br from-brand-50 to-slate-100 dark:from-slate-900 dark:to-black" />
+					)}
+					<p class="line-clamp-3 flex-1 self-center px-1 text-xs leading-snug font-semibold text-slate-900 dark:text-slate-100">{a.title}</p>
+				</a>
+			))}
+		</div>
+	)}
+
+	{articles.length >= 3 && (
+		<div class="grid grid-cols-2 grid-rows-2 gap-1.5">
+			{shown.map((a) => (
+				<a
+					href={`/articles/${slugFor(a)}/`}
+					class="tl2-hoverable overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors hover:border-brand-200 dark:border-slate-800 dark:bg-black dark:hover:border-brand-800"
+					data-title={a.title}
+					data-excerpt={a.excerpt}
+				>
+					{a.image_url ? (
+						<img src={a.image_url} alt="" loading="lazy" referrerpolicy="no-referrer" class="aspect-square w-full object-cover" />
+					) : (
+						<div class="aspect-square w-full bg-gradient-to-br from-brand-50 to-slate-100 dark:from-slate-900 dark:to-black" />
+					)}
+				</a>
+			))}
+			<div class="flex aspect-square w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-center text-sm font-semibold text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
+				+{Math.max(moreCount, 0)}<br />more
+			</div>
+		</div>
+	)}
+</div>

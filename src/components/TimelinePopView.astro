@@ -1,0 +1,237 @@
+---
+import { groupByDate, formatDayLabel } from "../lib/articles";
+import DayTile from "./DayTile.astro";
+
+const groups = groupByDate(); // ascending: oldest first, newest last
+---
+
+<div class="mb-3 flex justify-end">
+	<button
+		id="tl2-view-below-btn"
+		type="button"
+		class="inline-flex items-center gap-1 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 dark:bg-brand-500 dark:text-black dark:hover:bg-brand-400"
+	>
+		View
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>
+	</button>
+</div>
+
+<div id="tl2-viewport" class="relative h-[34rem] select-none">
+	<!-- The line sits at exactly 50% of the viewport. Every .tl2-item below is
+	     its own 1fr/auto/1fr grid of the SAME total height, so their middle
+	     (marker) row lands at the same 50% mark automatically -- no per-pixel
+	     JS measurement needed, so it can't drift out of sync. The tick itself
+	     is a fixed h-4 element vertically centered in that row; the date is
+	     absolutely positioned above/below it so it never affects the tick's
+	     own centering (that mismatch was the previous bug). -->
+	<div class="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-0.5 -translate-y-1/2 bg-slate-200 dark:bg-slate-800"></div>
+
+	<div id="tl2-track" class="hide-scrollbar relative z-[1] flex h-full items-stretch gap-16 overflow-x-auto scroll-smooth">
+		{groups.map((g, i) => {
+			const isAbove = i % 2 === 0;
+			const label = formatDayLabel(g.date);
+			return (
+				<div class="tl2-item grid h-full w-44 shrink-0 grid-rows-[1fr_auto_1fr]" data-date={g.date}>
+					<div class="flex items-end justify-center pb-4">{isAbove && <DayTile articles={g.articles} origin="bottom" />}</div>
+
+					<div class="relative flex h-4 items-center justify-self-center">
+						<span class="tl2-tick h-4 w-0.5 shrink-0 rounded-full bg-slate-300 transition dark:bg-slate-700"></span>
+						<time
+							datetime={g.date}
+							class={`tl2-date absolute left-1/2 -translate-x-1/2 text-sm font-medium whitespace-nowrap text-slate-400 transition dark:text-slate-500 ${isAbove ? "top-full mt-1.5" : "bottom-full mb-1.5"}`}
+						>
+							{label}
+						</time>
+					</div>
+
+					<div class="flex items-start justify-center pt-4">{!isAbove && <DayTile articles={g.articles} origin="top" />}</div>
+				</div>
+			);
+		})}
+	</div>
+</div>
+
+<div
+	id="tl2-tooltip"
+	role="tooltip"
+	class="pointer-events-none fixed z-50 w-64 -translate-x-1/2 -translate-y-[calc(100%+0.75rem)] rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 opacity-0 shadow-lg transition-opacity duration-150 dark:border-slate-800 dark:bg-black dark:text-slate-400"
+>
+	<p id="tl2-tooltip-title" class="mb-1 text-xs font-semibold text-slate-900 dark:text-slate-100"></p>
+	<p id="tl2-tooltip-body"></p>
+</div>
+
+<section class="mt-10 bg-slate-100 dark:bg-slate-950">
+	<div class="mx-auto max-w-6xl px-6 py-10">
+		<div id="tl2-content"></div>
+	</div>
+</section>
+
+<script type="application/json" id="timeline2-data" set:html={JSON.stringify(groups.map((g) => ({
+	date: g.date,
+	articles: g.articles.map((a) => ({ slug: a.url.split("/").filter(Boolean).pop(), title: a.title, summary: a.summary, image_url: a.image_url })),
+})))} />
+
+<style>
+	.hide-scrollbar {
+		scrollbar-width: none;
+	}
+	.hide-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+	.tl2-tick,
+	.tl2-date {
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease,
+			transform 0.15s ease;
+	}
+</style>
+
+<script>
+	import { renderDayCardsGrid, el, type ArticleStub } from "../lib/domCardBuilder";
+
+	interface DateGroup {
+		date: string;
+		articles: ArticleStub[];
+	}
+
+	const dataEl = document.getElementById("timeline2-data");
+	const groups: DateGroup[] = JSON.parse(dataEl?.textContent ?? "[]");
+	const byDate = new Map(groups.map((g) => [g.date, g.articles]));
+
+	const viewport = document.getElementById("tl2-viewport")!;
+	const track = document.getElementById("tl2-track")!;
+	const content = document.getElementById("tl2-content")!;
+	const items = Array.from(track.querySelectorAll<HTMLElement>(".tl2-item"));
+
+	const tooltip = document.getElementById("tl2-tooltip")!;
+	const tooltipTitle = document.getElementById("tl2-tooltip-title")!;
+	const tooltipBody = document.getElementById("tl2-tooltip-body")!;
+	const viewBelowBtn = document.getElementById("tl2-view-below-btn")!;
+
+	let activeIndex = items.length - 1;
+
+	function formatFullDate(key: string): string {
+		return new Date(`${key}T00:00:00+08:00`).toLocaleDateString("en-MY", {
+			weekday: "long",
+			day: "numeric",
+			month: "long",
+			year: "numeric",
+		});
+	}
+
+	function renderContent(date: string) {
+		const arts = byDate.get(date) ?? [];
+		const wrapper = el("div", {});
+		wrapper.append(
+			el("h2", { class: "font-display text-2xl font-semibold text-slate-900 dark:text-slate-100" }, formatFullDate(date)),
+			el("div", { class: "mt-5" }, renderDayCardsGrid(arts)),
+		);
+		content.replaceChildren(wrapper);
+	}
+
+	function applyEdgePadding() {
+		const pad = Math.max(viewport.clientWidth / 2 - 88, 16); // 88 = half item width (w-44)
+		track.style.paddingLeft = `${pad}px`;
+		track.style.paddingRight = `${pad}px`;
+	}
+
+	let ticking = false;
+	function updatePop() {
+		ticking = false;
+		const vRect = viewport.getBoundingClientRect();
+		const centerX = vRect.left + vRect.width / 2;
+		const half = vRect.width / 2;
+
+		let closest = 0;
+		let closestNorm = Infinity;
+
+		items.forEach((item, i) => {
+			const r = item.getBoundingClientRect();
+			const itemCenter = r.left + r.width / 2;
+			const norm = Math.min(Math.abs(itemCenter - centerX) / half, 1);
+			if (norm < closestNorm) {
+				closestNorm = norm;
+				closest = i;
+			}
+
+			const scale = 1.18 - norm * 0.4;
+			const opacity = 1 - norm * 0.6;
+
+			const poppable = item.querySelector<HTMLElement>(".tl2-poppable");
+			if (poppable) {
+				poppable.style.transform = `scale(${scale})`;
+				poppable.style.opacity = String(Math.max(0.35, opacity));
+				poppable.style.zIndex = String(10 + Math.round((1 - norm) * 100));
+			}
+
+			const isNear = norm < 0.08;
+			const tick = item.querySelector<HTMLElement>(".tl2-tick")!;
+			const dates = item.querySelectorAll<HTMLElement>(".tl2-date");
+			tick.style.backgroundColor = isNear ? "var(--color-brand-600)" : "";
+			tick.style.transform = isNear ? "scaleY(1.8)" : "scaleY(1)";
+			dates.forEach((d) => {
+				d.style.color = isNear ? "var(--color-brand-600)" : "";
+				d.style.fontWeight = isNear ? "700" : "500";
+			});
+		});
+
+		if (closest !== activeIndex) {
+			activeIndex = closest;
+			renderContent(items[activeIndex].dataset.date!);
+		}
+	}
+
+	function onScroll() {
+		if (!ticking) {
+			ticking = true;
+			requestAnimationFrame(updatePop);
+		}
+	}
+
+	track.addEventListener("scroll", onScroll, { passive: true });
+	// Plain vertical wheel/trackpad input is left alone so the page always
+	// scrolls normally. Horizontal wheel input (shift+scroll, or a trackpad's
+	// sideways swipe) already scrolls this track natively, since it overflows
+	// horizontally -- no JS needed for that direction.
+	// A plain window "resize" listener misses cases where the page's own
+	// height changes (e.g. this component's content panel below growing or
+	// shrinking as you browse days) causes a scrollbar to appear/disappear,
+	// silently narrowing the viewport without the window itself resizing.
+	// ResizeObserver catches that -- and any other size change -- directly.
+	new ResizeObserver(() => {
+		applyEdgePadding();
+		updatePop();
+	}).observe(viewport);
+	// Belt-and-braces: recompute on any page-level scroll too, since only
+	// the track's own horizontal scroll was wired up above.
+	window.addEventListener("scroll", onScroll, { passive: true });
+
+	viewBelowBtn.addEventListener("click", () => {
+		content.scrollIntoView({ behavior: "smooth", block: "start" });
+	});
+
+	for (const hoverable of track.querySelectorAll<HTMLElement>(".tl2-hoverable")) {
+		hoverable.addEventListener("mouseenter", () => {
+			const r = hoverable.getBoundingClientRect();
+			tooltipTitle.textContent = hoverable.dataset.title ?? "";
+			tooltipBody.textContent = hoverable.dataset.excerpt ?? "";
+			tooltip.style.left = `${r.left + r.width / 2}px`;
+			tooltip.style.top = `${r.top}px`;
+			tooltip.style.opacity = "1";
+		});
+		hoverable.addEventListener("mouseleave", () => {
+			tooltip.style.opacity = "0";
+		});
+		hoverable.addEventListener("focus", () => hoverable.dispatchEvent(new MouseEvent("mouseenter")));
+		hoverable.addEventListener("blur", () => {
+			tooltip.style.opacity = "0";
+		});
+	}
+
+	applyEdgePadding();
+	// Default view: latest post, jump instantly to the rightmost (last) day.
+	items[activeIndex]?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "center", block: "nearest" });
+	renderContent(items[activeIndex]?.dataset.date ?? "");
+	updatePop();
+</script>

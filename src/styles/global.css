@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: toggled via a `dark` class on <html>, not just OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dfe9ff;
+  --color-brand-200: #c3d5ff;
+  --color-brand-300: #9ab6ff;
+  --color-brand-400: #6d8fff;
+  --color-brand-500: #4468f6;
+  --color-brand-600: #2f47dd;
+  --color-brand-700: #2837b3;
+  --color-brand-800: #26328c;
+  --color-brand-900: #232e6e;
+}
+
+body {
+  font-feature-settings: "cv11", "ss01";
+}

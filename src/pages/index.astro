@@ -1,0 +1,32 @@
+---
+import Layout from "../layouts/Layout.astro";
+import FeaturedSection from "../components/FeaturedSection.astro";
+import ArticleBrowser from "../components/ArticleBrowser.astro";
+
+const FEATURED_COUNT = 4; // 1 highlight + 3 in the reel
+---
+
+<Layout title="IntelSarawak — curated STEM news">
+	<section class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
+		<div class="mx-auto max-w-6xl px-6 py-10">
+			<h1 class="font-display text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
+				STEM developments in Sarawak
+			</h1>
+			<p class="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+				Science, technology, engineering and maths news, automatically filtered and
+				summarized from The Borneo Post's Sarawak coverage.
+			</p>
+		</div>
+	</section>
+
+	<FeaturedSection />
+
+	<section class="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
+		<div class="mx-auto max-w-6xl px-6 pt-12 pb-16">
+			<h2 class="font-display mb-8 text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-300">
+				All STEM activities
+			</h2>
+			<ArticleBrowser skip={FEATURED_COUNT} />
+		</div>
+	</section>
+</Layout>

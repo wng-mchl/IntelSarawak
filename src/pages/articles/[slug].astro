@@ -1,0 +1,57 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { articles, formatDate, slugFor } from "../../lib/articles";
+
+export function getStaticPaths() {
+	return articles.map((article) => ({
+		params: { slug: slugFor(article) },
+		props: { article },
+	}));
+}
+
+const { article } = Astro.props;
+---
+
+<Layout title={`${article.title} — IntelSarawak`} description={article.summary}>
+	<article class="mx-auto max-w-3xl px-6 py-16">
+		<a href="/" class="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
+			&larr; Back to all articles
+		</a>
+
+		<time datetime={article.date} class="mt-6 block text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+			{formatDate(article.date)}
+		</time>
+
+		<h1 class="font-display mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
+			{article.title}
+		</h1>
+
+		{article.image_url && (
+			<img
+				src={article.image_url}
+				alt=""
+				loading="lazy"
+				referrerpolicy="no-referrer"
+				class="mt-6 aspect-video w-full rounded-xl object-cover"
+			/>
+		)}
+
+		<div class="mt-8 space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300">
+			{article.summary.split("\n\n").map((paragraph) => <p>{paragraph}</p>)}
+		</div>
+
+		<div class="mt-10 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-black">
+			<p class="text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">Why this was flagged as STEM</p>
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{article.stem_reason}</p>
+		</div>
+
+		<a
+			href={article.url}
+			target="_blank"
+			rel="noopener noreferrer"
+			class="mt-10 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 dark:bg-brand-500 dark:text-black dark:hover:bg-brand-400"
+		>
+			View article on The Borneo Post &rarr;
+		</a>
+	</article>
+</Layout>

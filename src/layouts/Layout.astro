@@ -1,0 +1,103 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "STEM news from Sarawak, curated automatically." } = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<script is:inline>
+			(function () {
+				const stored = localStorage.getItem("theme");
+				const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+				if (stored === "dark" || (!stored && prefersDark)) {
+					document.documentElement.classList.add("dark");
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="description" content={description} />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased dark:bg-black dark:text-slate-100">
+		<header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
+			<div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
+				<a href="/" class="flex items-center gap-3">
+					<span class="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Intel</span>
+					<span class="h-6 w-[3px] rounded-full bg-brand-600 dark:bg-brand-400"></span>
+					<span class="font-display text-2xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">Sarawak</span>
+				</a>
+				<nav class="flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
+					<a href="/" class="transition hover:text-brand-600 dark:hover:text-brand-400">Latest</a>
+					<a href="/timeline" class="transition hover:text-brand-600 dark:hover:text-brand-400">Timeline</a>
+					<a
+						href="https://www.theborneopost.com/news/sarawak/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="transition hover:text-brand-600 dark:hover:text-brand-400"
+					>
+						Source
+					</a>
+					<button
+						id="theme-toggle"
+						type="button"
+						aria-label="Toggle dark mode"
+						class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-brand-700 dark:hover:text-brand-400"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 dark:hidden">
+							<circle cx="12" cy="12" r="4"></circle>
+							<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+						</svg>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-4 w-4 dark:block">
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+						</svg>
+					</button>
+				</nav>
+			</div>
+		</header>
+
+		<main>
+			<slot />
+		</main>
+
+		<footer class="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
+			<div class="mx-auto max-w-6xl px-6 py-8 text-sm text-slate-500 dark:text-slate-500">
+				<p>
+					Automatically curated from
+					<a
+						href="https://www.theborneopost.com/news/sarawak/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="underline decoration-slate-300 underline-offset-2 hover:text-brand-600 dark:decoration-slate-700 dark:hover:text-brand-400"
+					>
+						The Borneo Post
+					</a>
+					. Summaries generated locally; always check the original article for full context.
+				</p>
+			</div>
+		</footer>
+
+		<script>
+			const btn = document.getElementById("theme-toggle");
+			btn?.addEventListener("click", () => {
+				const isDark = document.documentElement.classList.toggle("dark");
+				localStorage.setItem("theme", isDark ? "dark" : "light");
+			});
+		</script>
+	</body>
+</html>
