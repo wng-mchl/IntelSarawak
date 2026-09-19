@@ -2,7 +2,6 @@
 import Layout from "../layouts/Layout.astro";
 import TimelineView from "../components/TimelineView.astro";
 import TimelinePopView from "../components/TimelinePopView.astro";
-import ArticleBrowser from "../components/ArticleBrowser.astro";
 ---
 
 <Layout title="Timeline — IntelSarawak" description="Browse STEM developments in Sarawak day by day.">
@@ -36,15 +35,6 @@ import ArticleBrowser from "../components/ArticleBrowser.astro";
 						</svg>
 						<span class="hidden sm:inline">Coverflow</span>
 					</button>
-					<button id="tlv-cards-btn" type="button" aria-label="Card view" class="tlv-toggle-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-							<rect x="3" y="3" width="8" height="8" rx="1.5"></rect>
-							<rect x="13" y="3" width="8" height="8" rx="1.5"></rect>
-							<rect x="3" y="13" width="8" height="8" rx="1.5"></rect>
-							<rect x="13" y="13" width="8" height="8" rx="1.5"></rect>
-						</svg>
-						<span class="hidden sm:inline">Cards</span>
-					</button>
 				</div>
 			</div>
 		</div>
@@ -56,10 +46,6 @@ import ArticleBrowser from "../components/ArticleBrowser.astro";
 
 	<section id="tlv-pop-view" class="hidden py-12">
 		<TimelinePopView />
-	</section>
-
-	<section id="tlv-cards-view" class="hidden mx-auto max-w-6xl px-6 py-12">
-		<ArticleBrowser />
 	</section>
 </Layout>
 
@@ -90,18 +76,16 @@ import ArticleBrowser from "../components/ArticleBrowser.astro";
 </style>
 
 <script>
-	type ViewName = "days" | "pop" | "cards";
+	type ViewName = "days" | "pop";
 	const KEY = "sarawak-stem-timeline-view";
 
 	const buttons: Record<ViewName, HTMLElement> = {
 		days: document.getElementById("tlv-days-btn")!,
 		pop: document.getElementById("tlv-pop-btn")!,
-		cards: document.getElementById("tlv-cards-btn")!,
 	};
 	const views: Record<ViewName, HTMLElement> = {
 		days: document.getElementById("tlv-days-view")!,
 		pop: document.getElementById("tlv-pop-view")!,
-		cards: document.getElementById("tlv-cards-view")!,
 	};
 
 	function setView(view: ViewName) {
@@ -121,5 +105,5 @@ import ArticleBrowser from "../components/ArticleBrowser.astro";
 	(Object.keys(buttons) as ViewName[]).forEach((v) => buttons[v].addEventListener("click", () => setView(v)));
 
 	const stored = localStorage.getItem(KEY);
-	setView(stored === "pop" || stored === "cards" ? stored : "days");
+	setView(stored === "days" ? "days" : "pop");
 </script>

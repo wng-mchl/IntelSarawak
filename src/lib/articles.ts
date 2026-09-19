@@ -1,4 +1,5 @@
 import raw from "../data/articles.json";
+import type { Category } from "./categories";
 
 export interface Article {
   title: string;
@@ -6,6 +7,7 @@ export interface Article {
   date: string;
   tags: string[];
   excerpt: string;
+  category: Category;
   stem_reason: string;
   summary: string;
   image_url: string | null;
@@ -24,11 +26,19 @@ export function articleBySlug(slug: string): Article | undefined {
   return articles.find((a) => slugFor(a) === slug);
 }
 
+// Sarawak is always UTC+8 with no DST, but a viewer's browser/OS can be in
+// any timezone. Without pinning the display timezone here, toLocaleDateString
+// renders in the VIEWER's local time -- which rolls a midnight-ish Sarawak
+// timestamp back to the previous calendar day for anyone west of UTC+8. This
+// is what caused the timeline to look off by one day.
+const TIMEZONE = "Asia/Kuching";
+
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-MY", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: TIMEZONE,
   });
 }
 
@@ -60,6 +70,8 @@ export function formatDayLabel(key: string): string {
   return new Date(`${key}T00:00:00+08:00`).toLocaleDateString("en-MY", {
     day: "numeric",
     month: "short",
+    year: "numeric",
+    timeZone: TIMEZONE,
   });
 }
 
@@ -69,5 +81,6 @@ export function formatFullDate(key: string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: TIMEZONE,
   });
 }

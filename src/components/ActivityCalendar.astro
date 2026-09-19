@@ -1,0 +1,608 @@
+---
+// Month-by-month activity calendar. The grid itself is built client-side from
+// the shared article payload so it can react to the category filter and
+// month navigation.
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+---
+
+<div class="cal-root relative w-fit max-w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-black">
+	<div class="flex items-center justify-between gap-4 px-1">
+		<button id="cal-prev" type="button" aria-label="Previous month" class="cal-nav">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"></path></svg>
+		</button>
+		<h3 id="cal-month" class="font-display text-xl font-semibold text-slate-800 dark:text-slate-200"></h3>
+		<button id="cal-next" type="button" aria-label="Next month" class="cal-nav">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M9 18l6-6-6-6"></path></svg>
+		</button>
+	</div>
+
+	<p class="mt-2 px-1 text-center text-sm text-slate-500 dark:text-slate-400">
+		<span id="cal-total" class="font-semibold text-slate-800 dark:text-slate-200">0</span> articles across <span id="cal-days" class="font-semibold text-slate-800 dark:text-slate-200">0</span> days
+	</p>
+
+	<div class="cal-scroller mt-4 overflow-x-auto">
+		<div class="cal-body">
+			<div class="cal-weekdays">
+				{WEEKDAYS.map((d) => <span>{d}</span>)}
+			</div>
+			<div class="cal-grid">
+				<div class="cal-ov" data-level="0" hidden></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-slate-500 dark:text-slate-400">
+		<p id="cal-busiest"></p>
+		<div class="flex items-center gap-1.5">
+			<span>Less</span>
+			{[0, 1, 2, 3, 4, 5].map((n) => <span class="cal-swatch" data-level={n}></span>)}
+			<span>More</span>
+		</div>
+	</div>
+</div>
+
+<style>
+	.cal-root {
+		--tile: 4.25rem;
+		--gap: 0.5rem;
+
+		--l0: var(--color-slate-100);
+		--l1: #fed7aa;
+		--l2: #fdba74;
+		--l3: #fb923c;
+		--l4: #f97316;
+		--l5: #c2410c;
+		--edge: #c2410c;
+	}
+	:global(.dark) .cal-root {
+		--l0: var(--color-slate-900);
+		--l1: #431407;
+		--l2: #7c2d12;
+		--l3: #c2410c;
+		--l4: #f97316;
+		--l5: #fdba74;
+		--edge: #fdba74;
+	}
+
+	/* Per-level fill + readable text, shared by tiles, swatches and the expanded box. */
+	/* Global on purpose: the tiles are created in the browser, so they never get
+	   Astro's scoping attribute and scoped [data-level] rules would not match them. */
+	:global(.cal-root [data-level="0"]) { --bg: var(--l0); --fg: var(--color-slate-400); }
+	:global(.cal-root [data-level="1"]) { --bg: var(--l1); --fg: #7c2d12; }
+	:global(.cal-root [data-level="2"]) { --bg: var(--l2); --fg: #7c2d12; }
+	:global(.cal-root [data-level="3"]) { --bg: var(--l3); --fg: #431407; }
+	:global(.cal-root [data-level="4"]) { --bg: var(--l4); --fg: #431407; }
+	:global(.cal-root [data-level="5"]) { --bg: var(--l5); --fg: #ffffff; }
+	:global(.dark .cal-root [data-level="0"]) { --fg: var(--color-slate-500); }
+	:global(.dark .cal-root [data-level="1"]) { --fg: #fdba74; }
+	:global(.dark .cal-root [data-level="2"]) { --fg: #ffedd5; }
+	:global(.dark .cal-root [data-level="3"]) { --fg: #ffffff; }
+	:global(.dark .cal-root [data-level="4"]) { --fg: #1c0a03; }
+	:global(.dark .cal-root [data-level="5"]) { --fg: #1c0a03; }
+
+	.cal-nav {
+		display: flex;
+		height: 2.5rem;
+		width: 2.5rem;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		border-radius: 9999px;
+		border: 2px solid var(--color-slate-200);
+		color: var(--color-slate-600);
+		transition: border-color 0.15s ease, color 0.15s ease;
+	}
+	.cal-nav:hover:not(:disabled) {
+		border-color: var(--edge);
+		color: var(--edge);
+	}
+	.cal-nav:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+	:global(.dark) .cal-nav {
+		border-color: var(--color-slate-800);
+		color: var(--color-slate-400);
+	}
+
+	.cal-body {
+		width: max-content;
+	}
+	.cal-weekdays,
+	.cal-grid {
+		display: grid;
+		grid-template-columns: repeat(7, var(--tile));
+		gap: var(--gap);
+	}
+	.cal-weekdays {
+		margin-bottom: 0.5rem;
+		text-align: center;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--color-slate-500);
+		transition: opacity 0.2s ease;
+	}
+	/* Once tiles have reflowed around the open box, columns no longer line up with weekdays. */
+	:global(.cal-root.reflowed) .cal-weekdays {
+		opacity: 0.25;
+	}
+
+	.cal-grid {
+		position: relative;
+		grid-template-rows: repeat(6, var(--tile));
+	}
+
+	.cal-swatch,
+	.cal-ov {
+		background-color: var(--bg);
+	}
+	:global(.cal-tile) {
+		position: relative;
+		border-radius: 1rem;
+		cursor: pointer;
+		background-color: var(--bg);
+		transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.25s ease, box-shadow 0.15s ease;
+	}
+	:global(.cal-tile:focus-visible) {
+		outline: none;
+		box-shadow: inset 0 0 0 3px var(--edge);
+	}
+	:global(.cal-tile[aria-pressed="true"]) {
+		box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--color-brand-600);
+	}
+	:global(.dark .cal-tile[aria-pressed="true"]) {
+		box-shadow: 0 0 0 2px var(--color-black), 0 0 0 4px var(--color-brand-400);
+	}
+	.cal-swatch {
+		width: 1rem;
+		height: 1rem;
+		border-radius: 0.35rem;
+	}
+	:global(.cal-day) {
+		position: absolute;
+		top: 0.5rem;
+		left: 0.65rem;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		line-height: 1;
+		color: var(--fg);
+	}
+
+	/* The expanded 2x2 box, laid over the hovered day. */
+	.cal-ov {
+		position: absolute;
+		z-index: 5;
+		box-sizing: border-box;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		padding: 0.85rem 0.95rem;
+		border: 3px solid var(--edge);
+		border-radius: 1.25rem;
+		color: var(--fg);
+		cursor: pointer;
+		box-shadow: 0 14px 28px -10px rgb(194 65 12 / 0.45);
+		transition:
+			left 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+			top 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+			width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+			height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 0.15s ease;
+	}
+	.cal-ov[hidden] {
+		display: none;
+	}
+	.cal-ov.closing {
+		opacity: 0;
+		pointer-events: none;
+	}
+	.cal-ov.selected {
+		outline: 3px solid var(--color-brand-600);
+		outline-offset: 2px;
+	}
+	:global(.dark) .cal-ov.selected {
+		outline-color: var(--color-brand-400);
+	}
+	:global(.cal-ov-head) {
+		display: flex;
+		align-items: baseline;
+		gap: 0.45rem;
+	}
+	:global(.cal-ov-day) {
+		font-family: var(--font-display);
+		font-size: 2rem;
+		font-weight: 600;
+		line-height: 1;
+	}
+	:global(.cal-ov-wd) {
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		opacity: 0.8;
+	}
+	:global(.cal-ov-count) {
+		font-size: 0.875rem;
+		font-weight: 700;
+	}
+	:global(.cal-ov-list) {
+		margin: 0.25rem 0 0;
+		padding: 0;
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1.25;
+	}
+	:global(.cal-ov-list li) {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	:global(.cal-ov-dot) {
+		height: 0.5rem;
+		width: 0.5rem;
+		flex-shrink: 0;
+		border-radius: 9999px;
+		box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.85);
+	}
+	:global(.cal-ov-label) {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	:global(.cal-ov-num) {
+		font-weight: 700;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:global(.cal-tile),
+		.cal-ov,
+		.cal-weekdays {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	import { categoryMeta } from "../lib/categories";
+	import { getFilter, loadArticles, setFilter, subscribe, dayKey } from "../lib/filterState";
+
+	const COLS = 7;
+	const ROWS = 6; // fixed, so the card never changes height between months or on hover
+
+	const root = document.querySelector<HTMLElement>(".cal-root")!;
+	const grid = root.querySelector<HTMLElement>(".cal-grid")!;
+	const ov = root.querySelector<HTMLElement>(".cal-ov")!;
+	const monthEl = root.querySelector<HTMLElement>("#cal-month")!;
+	const totalEl = root.querySelector("#cal-total")!;
+	const daysEl = root.querySelector("#cal-days")!;
+	const busiestEl = root.querySelector("#cal-busiest")!;
+	const prevBtn = root.querySelector<HTMLButtonElement>("#cal-prev")!;
+	const nextBtn = root.querySelector<HTMLButtonElement>("#cal-next")!;
+
+	const all = loadArticles();
+	const canHover = window.matchMedia("(hover: hover)").matches;
+
+	// Every month from the earliest to the latest article, inclusive.
+	const dayKeys = all.map((a) => dayKey(a.date)).sort();
+	const months: { y: number; m: number }[] = [];
+	if (dayKeys.length) {
+		let [y, m] = dayKeys[0].split("-").map(Number);
+		const [ly, lm] = dayKeys[dayKeys.length - 1].split("-").map(Number);
+		while (y < ly || (y === ly && m <= lm)) {
+			months.push({ y, m: m - 1 });
+			m += 1;
+			if (m > 12) {
+				m = 1;
+				y += 1;
+			}
+		}
+	}
+
+	let monthIdx = months.length - 1;
+	let byDay = new Map<string, typeof all>();
+	let tiles: HTMLButtonElement[] = [];
+	let lead = 0; // blank cells before the 1st of the month (Mon = 0)
+	let active: number | null = null; // index into tiles of the expanded day
+	let closeTimer: ReturnType<typeof setTimeout> | undefined;
+
+	const pad = (n: number) => String(n).padStart(2, "0");
+	const cellOf = (i: number) => ({ col: (lead + i) % COLS, row: Math.floor((lead + i) / COLS) });
+
+	function metrics() {
+		const t = tiles[0]?.offsetWidth ?? 0;
+		const g = parseFloat(getComputedStyle(grid).columnGap) || 0;
+		return { t, g, step: t + g };
+	}
+
+	function recount() {
+		const category = getFilter().category;
+		byDay = new Map();
+		for (const a of all) {
+			if (category && a.category !== category) continue;
+			const key = dayKey(a.date);
+			if (!byDay.has(key)) byDay.set(key, []);
+			byDay.get(key)!.push(a);
+		}
+
+		let total = 0;
+		let activeDays = 0;
+		let busiest: { key: string; n: number } | null = null;
+		tiles.forEach((t) => {
+			const n = byDay.get(t.dataset.date!)?.length ?? 0;
+			t.dataset.level = String(Math.min(n, 5));
+			t.setAttribute("aria-label", `${t.dataset.date}: ${n} article${n === 1 ? "" : "s"}`);
+			total += n;
+			if (n) activeDays += 1;
+			if (n && (!busiest || n > busiest.n)) busiest = { key: t.dataset.date!, n };
+		});
+		totalEl.textContent = String(total);
+		daysEl.textContent = String(activeDays);
+		busiestEl.textContent = "";
+		if (busiest) {
+			const { key, n } = busiest as { key: string; n: number };
+			const label = new Date(`${key}T00:00:00+08:00`).toLocaleDateString("en-MY", {
+				day: "numeric",
+				month: "short",
+				timeZone: "Asia/Kuching",
+			});
+			busiestEl.append("Busiest day: ");
+			const strong = document.createElement("span");
+			strong.className = "font-semibold text-slate-700 dark:text-slate-300";
+			strong.textContent = label;
+			busiestEl.append(strong, ` (${n})`);
+		}
+	}
+
+	function renderMonth() {
+		collapse(true);
+		const { y, m } = months[monthIdx];
+		const dayCount = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+		lead = (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7;
+
+		tiles.forEach((t) => t.remove());
+		tiles = Array.from({ length: dayCount }, (_, i) => {
+			const { col, row } = cellOf(i);
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "cal-tile";
+			btn.dataset.date = `${y}-${pad(m + 1)}-${pad(i + 1)}`;
+			btn.dataset.level = "0";
+			btn.setAttribute("aria-pressed", "false");
+			btn.style.gridColumn = String(col + 1);
+			btn.style.gridRow = String(row + 1);
+			const num = document.createElement("span");
+			num.className = "cal-day";
+			num.textContent = String(i + 1);
+			btn.append(num);
+			btn.addEventListener("focus", () => expand(i));
+			btn.addEventListener("blur", () => collapse());
+			btn.addEventListener("click", () => toggleDay(btn.dataset.date!));
+			return btn;
+		});
+		grid.prepend(...tiles);
+
+		monthEl.textContent = new Date(Date.UTC(y, m, 1)).toLocaleDateString("en-MY", {
+			month: "long",
+			year: "numeric",
+			timeZone: "UTC",
+		});
+		prevBtn.disabled = monthIdx === 0;
+		nextBtn.disabled = monthIdx === months.length - 1;
+
+		recount();
+		markSelected(getFilter().date);
+	}
+
+	function markSelected(date: string | null) {
+		tiles.forEach((t) => t.setAttribute("aria-pressed", String(t.dataset.date === date)));
+		if (active !== null) ov.classList.toggle("selected", tiles[active].dataset.date === date);
+	}
+
+	function toggleDay(key: string) {
+		// Clicking the selected day again clears the day filter.
+		setFilter({ date: getFilter().date === key ? null : key });
+	}
+
+	function fillOverlay(tile: HTMLElement) {
+		const key = tile.dataset.date!;
+		const items = byDay.get(key) ?? [];
+		const d = new Date(`${key}T00:00:00+08:00`);
+
+		const head = document.createElement("div");
+		head.className = "cal-ov-head";
+		const day = document.createElement("span");
+		day.className = "cal-ov-day";
+		day.textContent = String(Number(key.slice(8)));
+		const wd = document.createElement("span");
+		wd.className = "cal-ov-wd";
+		wd.textContent = d.toLocaleDateString("en-MY", { weekday: "short", timeZone: "Asia/Kuching" });
+		head.append(day, wd);
+
+		const count = document.createElement("div");
+		count.className = "cal-ov-count";
+		count.textContent = items.length ? `${items.length} article${items.length === 1 ? "" : "s"}` : "No articles";
+		ov.replaceChildren(head, count);
+
+		if (items.length) {
+			const perCategory = new Map<string, number>();
+			items.forEach((a) => perCategory.set(a.category, (perCategory.get(a.category) ?? 0) + 1));
+			const top = [...perCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+			const list = document.createElement("ul");
+			list.className = "cal-ov-list";
+			top.forEach(([category, n]) => {
+				const li = document.createElement("li");
+				const dot = document.createElement("span");
+				dot.className = `cal-ov-dot ${categoryMeta(category).dot}`;
+				const label = document.createElement("span");
+				label.className = "cal-ov-label";
+				label.textContent = categoryMeta(category).label;
+				const num = document.createElement("span");
+				num.className = "cal-ov-num";
+				num.textContent = String(n);
+				li.append(dot, label, num);
+				list.append(li);
+			});
+			ov.append(list);
+		}
+	}
+
+	// Where each day goes while `k` is open as a 2x2 box: the box claims a block
+	// of cells that includes k's own cell, and every other day refills the
+	// remaining cells in reading order, so the grid stays gap-free.
+	function reflow(k: number) {
+		const { col, row } = cellOf(k);
+		const bc = Math.min(col, COLS - 2);
+		const br = Math.min(row, ROWS - 2);
+		const claimed = new Set([br * COLS + bc, br * COLS + bc + 1, (br + 1) * COLS + bc, (br + 1) * COLS + bc + 1]);
+
+		const pos: { col: number; row: number }[] = [];
+		let p = lead;
+		for (let i = 0; i < tiles.length; i++) {
+			if (i === k) {
+				pos.push({ col, row });
+				continue;
+			}
+			while (claimed.has(p)) p++;
+			pos.push({ col: p % COLS, row: Math.floor(p / COLS) });
+			p++;
+		}
+		return { bc, br, pos };
+	}
+
+	function expand(k: number) {
+		if (!canHover || !tiles[k]) return;
+		if (active === k) return;
+		clearTimeout(closeTimer);
+		active = k;
+
+		const { t, g, step } = metrics();
+		const { bc, br, pos } = reflow(k);
+		const rest = cellOf(k);
+
+		tiles.forEach((tile, i) => {
+			if (i === k) {
+				tile.style.transform = "";
+				return;
+			}
+			const from = cellOf(i);
+			tile.style.transform = `translate(${(pos[i].col - from.col) * step}px, ${(pos[i].row - from.row) * step}px)`;
+		});
+		root.classList.add("reflowed");
+
+		fillOverlay(tiles[k]);
+		ov.dataset.level = tiles[k].dataset.level ?? "0";
+		ov.classList.toggle("selected", tiles[k].dataset.date === getFilter().date);
+
+		// Grow from the day's own cell into the 2x2 block.
+		const wasHidden = ov.hidden;
+		if (wasHidden) {
+			ov.style.transition = "none";
+			ov.style.left = `${rest.col * step}px`;
+			ov.style.top = `${rest.row * step}px`;
+			ov.style.width = `${t}px`;
+			ov.style.height = `${t}px`;
+		}
+		ov.classList.remove("closing");
+		ov.hidden = false;
+		void ov.offsetWidth;
+		ov.style.transition = "";
+		ov.style.left = `${bc * step}px`;
+		ov.style.top = `${br * step}px`;
+		ov.style.width = `${2 * t + g}px`;
+		ov.style.height = `${2 * t + g}px`;
+	}
+
+	function collapse(immediate = false) {
+		if (active === null) return;
+		const tile = tiles[active];
+		active = null;
+
+		tiles.forEach((o) => (o.style.transform = ""));
+		root.classList.remove("reflowed");
+
+		if (immediate || !tile) {
+			ov.hidden = true;
+			ov.classList.remove("closing");
+			return;
+		}
+		const { t, step } = metrics();
+		const idx = tiles.indexOf(tile);
+		const { col, row } = cellOf(idx);
+		ov.style.left = `${col * step}px`;
+		ov.style.top = `${row * step}px`;
+		ov.style.width = `${t}px`;
+		ov.style.height = `${t}px`;
+		ov.classList.add("closing");
+		closeTimer = setTimeout(() => {
+			ov.hidden = true;
+			ov.classList.remove("closing");
+		}, 220);
+	}
+
+	// Hover is resolved against the *resting* grid, not whichever tile happens to
+	// sit under the pointer -- tiles are moving while a box is open, so hit-testing
+	// them would make the box jump around. Inside the open box, nothing changes.
+	grid.addEventListener("pointermove", (e) => {
+		if (!canHover || e.pointerType === "touch") return;
+		const { t, step } = metrics();
+		const rect = grid.getBoundingClientRect();
+		const x = e.clientX - rect.left;
+		const y = e.clientY - rect.top;
+
+		if (active !== null && !ov.hidden) {
+			const l = parseFloat(ov.style.left);
+			const tp = parseFloat(ov.style.top);
+			const w = parseFloat(ov.style.width);
+			if (x >= l && x <= l + w && y >= tp && y <= tp + w) return;
+		}
+
+		const col = Math.floor(x / step);
+		const row = Math.floor(y / step);
+		const inGap = x - col * step > t || y - row * step > t;
+		const k = row * COLS + col - lead;
+		if (inGap) return;
+		if (col < 0 || col >= COLS || row < 0 || row >= ROWS || k < 0 || k >= tiles.length) {
+			collapse();
+			return;
+		}
+		expand(k);
+	});
+	grid.addEventListener("pointerleave", () => collapse());
+	ov.addEventListener("click", () => {
+		if (active !== null) toggleDay(tiles[active].dataset.date!);
+	});
+
+	prevBtn.addEventListener("click", () => {
+		if (monthIdx > 0) {
+			monthIdx -= 1;
+			renderMonth();
+		}
+	});
+	nextBtn.addEventListener("click", () => {
+		if (monthIdx < months.length - 1) {
+			monthIdx += 1;
+			renderMonth();
+		}
+	});
+
+	if (months.length) {
+		renderMonth();
+		let lastCategory: string | null | undefined = getFilter().category;
+		subscribe((f) => {
+			if (f.category !== lastCategory) {
+				lastCategory = f.category;
+				collapse(true);
+				recount();
+			}
+			markSelected(f.date);
+		});
+	}
+</script>
