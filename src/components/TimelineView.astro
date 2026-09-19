@@ -46,7 +46,9 @@ const payload = groups.map((g) => ({
 		</button>
 	</div>
 
-	<div id="tl-content" class="mt-10"></div>
+	<div id="tl-slider" class="mt-6"></div>
+
+	<div id="tl-content" class="mt-4"></div>
 </div>
 
 <script type="application/json" id="timeline-data" set:html={JSON.stringify(payload)} />
@@ -77,7 +79,8 @@ const payload = groups.map((g) => ({
 
 <script>
 	import { renderDayCardsGrid, el, type ArticleStub } from "../lib/domCardBuilder";
-	import { formatFullDate } from "../lib/articles";
+	import { formatDayLabel, formatFullDate } from "../lib/articles";
+		import { createTimelineSlider } from "../lib/timelineSlider";
 
 	interface DateGroup {
 		date: string;
@@ -96,6 +99,15 @@ const payload = groups.map((g) => ({
 
 	let activeIndex = ticks.length - 1;
 
+	const slider = createTimelineSlider(document.getElementById("tl-slider")!, {
+		steps: ticks.length,
+		label: (i) => formatDayLabel(ticks[i].dataset.date!),
+		onChange: (fraction) => {
+			const index = Math.round(fraction * (ticks.length - 1));
+			if (index !== activeIndex) setActive(index);
+		},
+	});
+
 	function renderContent(date: string) {
 		const arts = byDate.get(date) ?? [];
 		const wrapper = el("div", {});
@@ -112,6 +124,8 @@ const payload = groups.map((g) => ({
 
 		ticks.forEach((t, i) => t.classList.toggle("active", i === index));
 		renderContent(ticks[index].dataset.date!);
+
+		slider?.setFraction(ticks.length > 1 ? index / (ticks.length - 1) : 1);
 
 		prevBtn.toggleAttribute("disabled", index === 0);
 		nextBtn.toggleAttribute("disabled", index === ticks.length - 1);

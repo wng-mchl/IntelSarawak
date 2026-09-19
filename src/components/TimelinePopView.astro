@@ -51,6 +51,8 @@ const groups = groupByDate(); // ascending: oldest first, newest last
 	</div>
 </div>
 
+<div id="tl2-slider" class="mt-2"></div>
+
 <div
 	id="tl2-tooltip"
 	role="tooltip"
@@ -89,7 +91,8 @@ const groups = groupByDate(); // ascending: oldest first, newest last
 
 <script>
 	import { renderDayCardsGrid, el, type ArticleStub } from "../lib/domCardBuilder";
-	import { formatFullDate } from "../lib/articles";
+	import { formatDayLabel, formatFullDate } from "../lib/articles";
+	import { createTimelineSlider } from "../lib/timelineSlider";
 
 	interface DateGroup {
 		date: string;
@@ -111,6 +114,23 @@ const groups = groupByDate(); // ascending: oldest first, newest last
 	const viewBelowBtn = document.getElementById("tl2-view-below-btn")!;
 
 	let activeIndex = items.length - 1;
+
+	// Items are evenly spaced and the edge padding centers the first/last one, so
+	// scroll position maps linearly onto the slider: 0 = oldest day, 1 = newest.
+	const maxScroll = () => Math.max(track.scrollWidth - track.clientWidth, 0);
+	const slider = createTimelineSlider(document.getElementById("tl2-slider")!, {
+		steps: items.length,
+		label: (i) => formatDayLabel(items[i].dataset.date!),
+		onChange: (fraction, dragging) => {
+			if (dragging) {
+				// Follow the pointer exactly; smooth-scrolling here would lag behind it.
+				track.scrollTo({ left: fraction * maxScroll(), behavior: "instant" as ScrollBehavior });
+			} else {
+				const snapped = Math.round(fraction * (items.length - 1)) / (items.length - 1);
+				track.scrollTo({ left: snapped * maxScroll(), behavior: "smooth" });
+			}
+		},
+	});
 
 	function renderContent(date: string) {
 		const arts = byDate.get(date) ?? [];
@@ -172,6 +192,9 @@ const groups = groupByDate(); // ascending: oldest first, newest last
 			activeIndex = closest;
 			renderContent(items[activeIndex].dataset.date!);
 		}
+
+		const max = maxScroll();
+		slider?.setFraction(max ? track.scrollLeft / max : 1);
 	}
 
 	function onScroll() {
