@@ -1,81 +1,105 @@
 ---
-import { articles } from "../lib/articles";
 import { CATEGORY_ORDER, CATEGORY_META } from "../lib/categories";
 
-const total = articles.length;
-const cards = CATEGORY_ORDER.map((key) => {
-  const count = articles.filter((a) => a.category === key).length;
-  return { key, count, share: total ? (count / total) * 100 : 0, ...CATEGORY_META[key] };
-});
+const items = CATEGORY_ORDER.map((key) => ({ key, ...CATEGORY_META[key] }));
+const itemClass =
+  "cat-seg-item relative z-10 flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-slate-500 transition-colors dark:text-slate-400";
 ---
 
-<div class="flex h-full min-w-0 flex-col">
-	<h3 class="font-display text-lg font-semibold text-slate-800 dark:text-slate-200">Browse by category</h3>
-	<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-		Pick a category to filter the list and recolour the calendar.
-	</p>
+<!-- iOS-style segmented control: one rounded track, a sliding "thumb" behind the active item. -->
+<div
+	class="cat-seg relative flex overflow-x-auto rounded-2xl bg-slate-100 p-1.5 dark:bg-slate-900"
+	role="group"
+	aria-label="Filter by category"
+>
+	<span class="cat-seg-thumb pointer-events-none absolute top-1.5 bottom-1.5 left-0 w-0 rounded-xl bg-white opacity-0 shadow-sm ring-1 ring-black/5 dark:bg-slate-700 dark:ring-white/10"></span>
 
-	<div class="mt-4 grid flex-1 grid-cols-2 grid-rows-3 gap-4">
-		<button type="button" data-cat="" class="cat-card flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 text-left transition dark:border-slate-800 dark:bg-black">
-			<span class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-				<span class="h-2.5 w-2.5 rounded-full bg-brand-500"></span>
-				All
-			</span>
-			<span class="font-display block text-4xl font-semibold text-slate-900 dark:text-slate-100">{total}</span>
-			<span class="block h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900">
-				<span class="block h-full w-full rounded-full bg-brand-400 dark:bg-brand-500"></span>
-			</span>
+	<button type="button" data-cat="" class={itemClass}>
+		<span class="h-2 w-2 shrink-0 rounded-full bg-brand-500"></span>
+		All
+	</button>
+
+	{items.map((item) => (
+		<button type="button" data-cat={item.key} class={itemClass}>
+			<span class={`h-2 w-2 shrink-0 rounded-full ${item.dot}`}></span>
+			{item.label}
 		</button>
-
-		{cards.map((c) => (
-			<button type="button" data-cat={c.key} class="cat-card flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 text-left transition dark:border-slate-800 dark:bg-black">
-				<span class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-					<span class={`h-2.5 w-2.5 rounded-full ${c.dot}`}></span>
-					{c.label}
-				</span>
-				<span class="font-display block text-4xl font-semibold text-slate-900 dark:text-slate-100">{c.count}</span>
-				<span class="block h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900">
-					<span class={`block h-full rounded-full ${c.bar}`} style={`width: ${c.share}%`}></span>
-				</span>
-			</button>
-		))}
-	</div>
+	))}
 </div>
 
 <style>
-	.cat-card:hover {
-		border-color: var(--color-brand-300);
+	.cat-seg {
+		scrollbar-width: none;
 	}
-	:global(.dark) .cat-card:hover {
-		border-color: var(--color-brand-700);
+	.cat-seg::-webkit-scrollbar {
+		display: none;
 	}
-	.cat-card.active {
-		border-color: var(--color-brand-600);
-		box-shadow: 0 0 0 1px var(--color-brand-600);
+	.cat-seg-thumb {
+		transition:
+			left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+			width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 0.2s ease;
 	}
-	:global(.dark) .cat-card.active {
-		border-color: var(--color-brand-400);
-		box-shadow: 0 0 0 1px var(--color-brand-400);
+	.cat-seg-item:hover:not(.active) {
+		color: var(--color-slate-800);
+	}
+	:global(.dark) .cat-seg-item:hover:not(.active) {
+		color: var(--color-slate-100);
+	}
+	.cat-seg-item.active {
+		color: var(--color-slate-900);
+	}
+	:global(.dark) .cat-seg-item.active {
+		color: var(--color-white);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cat-seg-thumb {
+			transition: none;
+		}
 	}
 </style>
 
 <script>
 	import { getFilter, setFilter, subscribe } from "../lib/filterState";
 
-	const cards = Array.from(document.querySelectorAll<HTMLButtonElement>(".cat-card"));
+	const track = document.querySelector<HTMLElement>(".cat-seg")!;
+	const thumb = track.querySelector<HTMLElement>(".cat-seg-thumb")!;
+	const items = Array.from(track.querySelectorAll<HTMLButtonElement>(".cat-seg-item"));
 
-	cards.forEach((card) => {
-		card.addEventListener("click", () => {
-			const key = card.dataset.cat || null;
+	function moveThumb(animate: boolean) {
+		const activeItem = items.find((i) => i.classList.contains("active"));
+		if (!activeItem) return;
+		if (!animate) thumb.style.transition = "none";
+		thumb.style.left = `${activeItem.offsetLeft}px`;
+		thumb.style.width = `${activeItem.offsetWidth}px`;
+		thumb.style.opacity = "1";
+		if (!animate) {
+			void thumb.offsetWidth; // apply without the slide
+			thumb.style.transition = "";
+		} else {
+			activeItem.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+		}
+	}
+
+	items.forEach((item) => {
+		item.addEventListener("click", () => {
+			const key = item.dataset.cat || null;
 			// Clicking the active category again returns to "All".
 			setFilter({ category: getFilter().category === key ? null : key });
 		});
 	});
 
+	let first = true;
 	subscribe((f) => {
-		cards.forEach((card) => {
-			const key = card.dataset.cat || null;
-			card.classList.toggle("active", key === f.category);
+		items.forEach((item) => {
+			const on = (item.dataset.cat || null) === f.category;
+			item.classList.toggle("active", on);
+			item.setAttribute("aria-pressed", String(on));
 		});
+		moveThumb(!first);
+		first = false;
 	});
+
+	// Widths change with fonts loading and with the window, so re-fit the thumb.
+	new ResizeObserver(() => moveThumb(false)).observe(track);
 </script>

@@ -5,39 +5,65 @@
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 ---
 
-<div class="cal-root relative w-fit max-w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-black">
-	<div class="flex items-center justify-between gap-4 px-1">
-		<button id="cal-prev" type="button" aria-label="Previous month" class="cal-nav">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"></path></svg>
-		</button>
-		<h3 id="cal-month" class="font-display text-xl font-semibold text-slate-800 dark:text-slate-200"></h3>
-		<button id="cal-next" type="button" aria-label="Next month" class="cal-nav">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M9 18l6-6-6-6"></path></svg>
-		</button>
-	</div>
-
-	<p class="mt-2 px-1 text-center text-sm text-slate-500 dark:text-slate-400">
-		<span id="cal-total" class="font-semibold text-slate-800 dark:text-slate-200">0</span> articles across <span id="cal-days" class="font-semibold text-slate-800 dark:text-slate-200">0</span> days
-	</p>
-
-	<div class="cal-scroller mt-4 overflow-x-auto">
-		<div class="cal-body">
-			<div class="cal-weekdays">
-				{WEEKDAYS.map((d) => <span>{d}</span>)}
+<div class="cal-root contents">
+	<div class="relative mx-auto w-full max-w-xl min-w-0 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 lg:max-w-none dark:border-slate-800 dark:bg-black">
+		<div class="mb-4 flex justify-center">
+			<div class="cal-seg" role="group" aria-label="Calendar view">
+				<button id="cal-mode-month" type="button" class="cal-seg-btn active" aria-pressed="true">Month</button>
+				<button id="cal-mode-week" type="button" class="cal-seg-btn" aria-pressed="false">Week</button>
 			</div>
-			<div class="cal-grid">
-				<div class="cal-ov" data-level="0" hidden></div>
+		</div>
+
+		<div class="flex items-center justify-between gap-4 px-1">
+			<button id="cal-prev" type="button" aria-label="Previous month" class="cal-nav">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"></path></svg>
+			</button>
+			<h3 id="cal-month" class="font-display text-xl font-semibold text-slate-800 dark:text-slate-200"></h3>
+			<button id="cal-next" type="button" aria-label="Next month" class="cal-nav">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M9 18l6-6-6-6"></path></svg>
+			</button>
+		</div>
+
+		<p class="mt-2 px-1 text-center text-sm text-slate-500 dark:text-slate-400">
+			<span id="cal-total" class="font-semibold text-slate-800 dark:text-slate-200">0</span> articles across <span id="cal-days" class="font-semibold text-slate-800 dark:text-slate-200">0</span> days
+		</p>
+
+		<div class="cal-stage mt-4">
+			<div class="cal-scroller overflow-x-auto">
+				<div class="cal-body">
+					<div class="cal-weekdays">
+						{WEEKDAYS.map((d) => <span>{d}</span>)}
+					</div>
+					<div class="cal-grid">
+						<div class="cal-ov" data-level="0" hidden></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-slate-500 dark:text-slate-400">
+			<p id="cal-busiest"></p>
+			<div class="flex items-center gap-1.5">
+				<span>Less</span>
+				{[0, 1, 2, 3, 4, 5].map((n) => <span class="cal-swatch" data-level={n}></span>)}
+				<span>More</span>
 			</div>
 		</div>
 	</div>
 
-	<div class="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-slate-500 dark:text-slate-400">
-		<p id="cal-busiest"></p>
-		<div class="flex items-center gap-1.5">
-			<span>Less</span>
-			{[0, 1, 2, 3, 4, 5].map((n) => <span class="cal-swatch" data-level={n}></span>)}
-			<span>More</span>
+	<div class="flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-black">
+		<div class="flex flex-wrap items-start justify-between gap-3 px-1">
+			<div>
+				<h3 class="font-display text-lg font-semibold text-slate-800 dark:text-slate-200">Articles per day</h3>
+				<p class="cal-wk-caption mt-0.5 text-sm text-slate-500 dark:text-slate-400"></p>
+			</div>
+			<div class="cal-seg cal-seg-sm" role="group" aria-label="Chart type">
+				<button id="cal-chart-bar" type="button" class="cal-seg-btn active" aria-pressed="true">Bar</button>
+				<button id="cal-chart-line" type="button" class="cal-seg-btn" aria-pressed="false">Line</button>
+			</div>
 		</div>
+		<div class="cal-wk-chart mt-5 flex-1"></div>
+		<div class="cal-wk-line relative mt-5 flex-1" hidden></div>
 	</div>
 </div>
 
@@ -105,8 +131,19 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		color: var(--color-slate-400);
 	}
 
+	/* The grid's selection rings and the expanded box's shadow extend past its
+	   edges; overflow-x makes this a clipping container, so it gets breathing room
+	   (negative margins keep the layout footprint unchanged). */
+	.cal-scroller {
+		padding: 0.75rem 0.75rem 2rem;
+		margin: -0.75rem -0.75rem -2rem;
+		container-type: inline-size;
+	}
+	/* Fluid squares: 7 columns share the card's width, so the calendar scales down
+	   (or up) with its grid column instead of having a fixed size. */
 	.cal-body {
-		width: max-content;
+		--tile: calc((100cqw - 6 * var(--gap)) / 7);
+		width: 100%;
 	}
 	.cal-weekdays,
 	.cal-grid {
@@ -129,7 +166,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 	.cal-grid {
 		position: relative;
-		grid-template-rows: repeat(6, var(--tile));
+		grid-template-rows: repeat(var(--rows, 6), var(--tile));
 	}
 
 	.cal-swatch,
@@ -138,7 +175,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	}
 	:global(.cal-tile) {
 		position: relative;
-		border-radius: 1rem;
+		border-radius: 0.8rem;
 		cursor: pointer;
 		background-color: var(--bg);
 		transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.25s ease, box-shadow 0.15s ease;
@@ -160,9 +197,9 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	}
 	:global(.cal-day) {
 		position: absolute;
-		top: 0.5rem;
-		left: 0.65rem;
-		font-size: 0.8125rem;
+		top: 0.4rem;
+		left: 0.5rem;
+		font-size: 0.75rem;
 		font-weight: 700;
 		line-height: 1;
 		color: var(--fg);
@@ -176,10 +213,10 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		gap: 0.2rem;
-		padding: 0.85rem 0.95rem;
-		border: 3px solid var(--edge);
-		border-radius: 1.25rem;
+		gap: 0.1rem;
+		padding: 0.5rem 0.6rem;
+		border: 2px solid var(--edge);
+		border-radius: 1rem;
 		color: var(--fg);
 		cursor: pointer;
 		box-shadow: 0 14px 28px -10px rgb(194 65 12 / 0.45);
@@ -211,19 +248,19 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	}
 	:global(.cal-ov-day) {
 		font-family: var(--font-display);
-		font-size: 2rem;
+		font-size: 1.5rem;
 		font-weight: 600;
 		line-height: 1;
 	}
 	:global(.cal-ov-wd) {
-		font-size: 0.75rem;
+		font-size: 0.625rem;
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		opacity: 0.8;
 	}
 	:global(.cal-ov-count) {
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		font-weight: 700;
 	}
 	:global(.cal-ov-list) {
@@ -232,8 +269,8 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		list-style: none;
 		display: flex;
 		flex-direction: column;
-		gap: 0.3rem;
-		font-size: 0.75rem;
+		gap: 0.15rem;
+		font-size: 0.6875rem;
 		font-weight: 600;
 		line-height: 1.25;
 	}
@@ -260,7 +297,236 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		font-weight: 700;
 	}
 
+	/* Month / Week toggle */
+	.cal-seg {
+		display: inline-flex;
+		padding: 0.25rem;
+		border-radius: 0.875rem;
+		border: 1px solid var(--color-slate-200);
+		background: var(--color-slate-100);
+	}
+	:global(.dark) .cal-seg {
+		border-color: var(--color-slate-800);
+		background: var(--color-slate-900);
+	}
+	.cal-seg-btn {
+		padding: 0.4rem 1.25rem;
+		border-radius: 0.65rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-slate-500);
+		transition: background-color 0.15s ease, color 0.15s ease;
+	}
+	:global(.dark) .cal-seg-btn {
+		color: var(--color-slate-400);
+	}
+	.cal-seg-btn:hover:not(.active) {
+		color: var(--edge);
+	}
+	.cal-seg-btn.active {
+		background: var(--edge);
+		color: #ffffff;
+		box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+	}
+	:global(.dark) .cal-seg-btn.active {
+		color: #1c0a03;
+	}
+
+	.cal-seg-sm .cal-seg-btn {
+		padding: 0.25rem 0.85rem;
+		font-size: 0.8125rem;
+	}
+	/* Charts card: n columns (7 for a week, ~30 for a month) share the card's width. */
+	.cal-wk-chart {
+		display: grid;
+		grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr));
+		gap: var(--wk-gap, 0.5rem);
+		min-height: 13rem;
+	}
+	:global(.cal-wk-chart.compact) {
+		--wk-gap: 3px;
+	}
+	:global(.cal-wk-day) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		cursor: pointer;
+		border-radius: 0.9rem;
+		padding: 0.3rem 0 0.45rem;
+		transition: background-color 0.15s ease, box-shadow 0.15s ease;
+	}
+	/* The hover shade must differ from the empty bar track (slate) or the column
+	   just looks unchanged, so it uses the site's blue accent instead. */
+	:global(.cal-wk-day:hover) {
+		background: var(--color-brand-100);
+	}
+	:global(.dark .cal-wk-day:hover) {
+		background: var(--color-brand-900);
+	}
+	/* Week tiles don't expand, so they get a plain blue outline on hover. */
+	:global(.cal-root[data-mode="week"] .cal-tile:hover) {
+		box-shadow: inset 0 0 0 3px var(--color-brand-500);
+	}
+	:global(.cal-root[data-mode="week"] .cal-tile[aria-pressed="true"]) {
+		box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--color-brand-600);
+	}
+	:global(.dark .cal-root[data-mode="week"] .cal-tile[aria-pressed="true"]) {
+		box-shadow: 0 0 0 2px var(--color-black), 0 0 0 4px var(--color-brand-400);
+	}
+	:global(.cal-wk-chart .cal-wk-day) {
+		transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+	}
+	/* With a day picked, the other days recede. */
+	:global(.cal-wk-chart.has-sel .cal-wk-day[aria-pressed="false"]) {
+		opacity: 0.45;
+	}
+	:global(.cal-wk-chart.has-sel .cal-wk-day[aria-pressed="false"]:hover) {
+		opacity: 1;
+	}
+	:global(.cal-wk-day:focus-visible) {
+		outline: none;
+		box-shadow: inset 0 0 0 3px var(--edge);
+	}
+	:global(.cal-wk-day[aria-pressed="true"]) {
+		box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--color-brand-600);
+	}
+	:global(.dark .cal-wk-day[aria-pressed="true"]) {
+		box-shadow: 0 0 0 2px var(--color-black), 0 0 0 4px var(--color-brand-400);
+	}
+	:global(.cal-wk-num) {
+		height: 1.5rem;
+		text-align: center;
+		font-family: var(--font-display);
+		font-size: 1.25rem;
+		font-weight: 600;
+		line-height: 1.5rem;
+		color: var(--color-slate-800);
+	}
+	:global(.dark .cal-wk-num) {
+		color: var(--color-slate-200);
+	}
+	:global(.cal-wk-track) {
+		display: flex;
+		flex-direction: column-reverse;
+		justify-content: flex-start;
+		gap: 2px;
+		flex: 1;
+		min-height: 8rem;
+		margin: 0 0.5rem;
+		overflow: hidden;
+		border-radius: 0.75rem;
+		background: var(--color-slate-100);
+	}
+	:global(.dark .cal-wk-track) {
+		background: var(--color-slate-900);
+	}
+	:global(.cal-wk-seg) {
+		flex: 0 1 0;
+		min-height: 0;
+		width: 100%;
+		transition: flex-grow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	:global(.cal-wk-spacer) {
+		flex: 1 1 0;
+		min-height: 0;
+	}
+	/* Month view has ~30 slim columns: drop the counts, shrink the labels. */
+	:global(.cal-wk-chart.compact .cal-wk-num) {
+		display: none;
+	}
+	:global(.cal-wk-chart.compact .cal-wk-track) {
+		margin: 0;
+		border-radius: 0.4rem;
+	}
+	:global(.cal-wk-chart.compact .cal-wk-day) {
+		padding-inline: 0;
+		border-radius: 0.5rem;
+	}
+	:global(.cal-wk-chart.compact .cal-wk-label) {
+		font-size: 0.6875rem;
+		min-height: 1rem;
+	}
+	:global(.cal-wk-label) {
+		text-align: center;
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1.2;
+		color: var(--color-slate-500);
+	}
+	:global(.cal-wk-label b) {
+		display: block;
+		font-size: 0.875rem;
+		color: var(--color-slate-700);
+	}
+	:global(.dark .cal-wk-label b) {
+		color: var(--color-slate-300);
+	}
+	/* Line chart (SVG built in the browser, hence :global) */
+	:global(.cal-ln) {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+	:global(.cal-ln-hit) {
+		fill: transparent;
+		cursor: pointer;
+		outline: none;
+		transition: fill 0.15s ease;
+	}
+	:global(.cal-ln-hit:hover),
+	:global(.cal-ln-hit[aria-pressed="true"]),
+	:global(.cal-ln-hit:focus-visible) {
+		fill: var(--color-brand-100);
+	}
+	:global(.dark .cal-ln-hit:hover),
+	:global(.dark .cal-ln-hit[aria-pressed="true"]),
+	:global(.dark .cal-ln-hit:focus-visible) {
+		fill: var(--color-brand-900);
+	}
+	:global(.cal-ln-path) {
+		fill: none;
+		stroke-width: 3;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-dasharray: 1;
+		stroke-dashoffset: 1;
+		transition: stroke-dashoffset 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	:global(.cal-ln-path.drawn) {
+		stroke-dashoffset: 0;
+	}
+	:global(.cal-ln-dot) {
+		stroke: var(--color-white);
+		stroke-width: 2;
+		pointer-events: none;
+	}
+	:global(.dark .cal-ln-dot) {
+		stroke: var(--color-black);
+	}
+	:global(.cal-ln-tip) {
+		position: absolute;
+		z-index: 10;
+		top: 0;
+		max-width: 16rem;
+		pointer-events: none;
+		border-radius: 0.75rem;
+		background: var(--color-slate-900);
+		color: var(--color-slate-100);
+		padding: 0.6rem 0.75rem;
+		font-size: 0.75rem;
+		line-height: 1.35;
+		box-shadow: 0 10px 25px -8px rgb(0 0 0 / 0.4);
+	}
+	:global(.dark .cal-ln-tip) {
+		background: var(--color-slate-100);
+		color: var(--color-slate-900);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
+		:global(.cal-ln-path),
+		:global(.cal-ln-hit),
+		:global(.cal-wk-seg),
 		:global(.cal-tile),
 		.cal-ov,
 		.cal-weekdays {
@@ -270,11 +536,13 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 </style>
 
 <script>
-	import { categoryMeta } from "../lib/categories";
+	import { CATEGORY_ORDER, categoryMeta } from "../lib/categories";
 	import { getFilter, loadArticles, setFilter, subscribe, dayKey } from "../lib/filterState";
 
 	const COLS = 7;
-	const ROWS = 6; // fixed, so the card never changes height between months or on hover
+	// Grid rows: 6 for a month, 1 for a week. Fixed per view so the card never
+	// resizes on hover.
+	let rows = 6;
 
 	const root = document.querySelector<HTMLElement>(".cal-root")!;
 	const grid = root.querySelector<HTMLElement>(".cal-grid")!;
@@ -285,6 +553,13 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	const busiestEl = root.querySelector("#cal-busiest")!;
 	const prevBtn = root.querySelector<HTMLButtonElement>("#cal-prev")!;
 	const nextBtn = root.querySelector<HTMLButtonElement>("#cal-next")!;
+	const chartEl = root.querySelector<HTMLElement>(".cal-wk-chart")!;
+	const captionEl = root.querySelector<HTMLElement>(".cal-wk-caption")!;
+	const lineEl = root.querySelector<HTMLElement>(".cal-wk-line")!;
+	const chartBarBtn = root.querySelector<HTMLButtonElement>("#cal-chart-bar")!;
+	const chartLineBtn = root.querySelector<HTMLButtonElement>("#cal-chart-line")!;
+	const modeMonthBtn = root.querySelector<HTMLButtonElement>("#cal-mode-month")!;
+	const modeWeekBtn = root.querySelector<HTMLButtonElement>("#cal-mode-week")!;
 
 	const all = loadArticles();
 	const canHover = window.matchMedia("(hover: hover)").matches;
@@ -305,7 +580,38 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		}
 	}
 
+	const DAY = 86_400_000;
+	const toMs = (key: string) => {
+		const [y, m, d] = key.split("-").map(Number);
+		return Date.UTC(y, m - 1, d);
+	};
+	const toKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+	const mondayOf = (ms: number) => ms - ((new Date(ms).getUTCDay() + 6) % 7) * DAY;
+	const firstWeek = dayKeys.length ? mondayOf(toMs(dayKeys[0])) : 0;
+	const lastWeek = dayKeys.length ? mondayOf(toMs(dayKeys[dayKeys.length - 1])) : 0;
+
+	const MODE_KEY = "sarawak-cal-mode";
+	type Mode = "month" | "week";
+	let mode: Mode = "month";
+	try {
+		if (localStorage.getItem(MODE_KEY) === "week") mode = "week";
+	} catch {
+		// storage blocked -- default to month
+	}
+
+	const CHART_KEY = "sarawak-cal-chart";
+	type ChartType = "bar" | "line";
+	let chartType: ChartType = "bar";
+	try {
+		if (localStorage.getItem(CHART_KEY) === "line") chartType = "line";
+	} catch {
+		// storage blocked -- default to bar
+	}
+
 	let monthIdx = months.length - 1;
+	let periodKeys: string[] = []; // the days the charts cover (a week or a month)
+	let periodLabel = "";
+	let weekStart = lastWeek; // Monday (ms) of the week shown in Week mode
 	let byDay = new Map<string, typeof all>();
 	let tiles: HTMLButtonElement[] = [];
 	let lead = 0; // blank cells before the 1st of the month (Mon = 0)
@@ -316,12 +622,12 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	const cellOf = (i: number) => ({ col: (lead + i) % COLS, row: Math.floor((lead + i) / COLS) });
 
 	function metrics() {
-		const t = tiles[0]?.offsetWidth ?? 0;
+		const t = tiles[0]?.getBoundingClientRect().width ?? 0;
 		const g = parseFloat(getComputedStyle(grid).columnGap) || 0;
 		return { t, g, step: t + g };
 	}
 
-	function recount() {
+	function computeByDay() {
 		const category = getFilter().category;
 		byDay = new Map();
 		for (const a of all) {
@@ -330,17 +636,35 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 			if (!byDay.has(key)) byDay.set(key, []);
 			byDay.get(key)!.push(a);
 		}
+	}
 
-		let total = 0;
-		let activeDays = 0;
-		let busiest: { key: string; n: number } | null = null;
+	// Recolour the tiles and refresh the summary (both Month and Week use them).
+	function recount() {
+		computeByDay();
 		tiles.forEach((t) => {
 			const n = byDay.get(t.dataset.date!)?.length ?? 0;
 			t.dataset.level = String(Math.min(n, 5));
 			t.setAttribute("aria-label", `${t.dataset.date}: ${n} article${n === 1 ? "" : "s"}`);
+		});
+		setSummary(tiles.map((t) => t.dataset.date!));
+	}
+
+	// Re-derive whatever is on screen from the current filter.
+	function refresh() {
+		recount();
+		renderChart();
+	}
+
+	// Totals, active days and busiest day across the given days.
+	function setSummary(keys: string[]) {
+		let total = 0;
+		let activeDays = 0;
+		let busiest: { key: string; n: number } | null = null;
+		keys.forEach((key) => {
+			const n = byDay.get(key)?.length ?? 0;
 			total += n;
 			if (n) activeDays += 1;
-			if (n && (!busiest || n > busiest.n)) busiest = { key: t.dataset.date!, n };
+			if (n && (!busiest || n > busiest.n)) busiest = { key, n };
 		});
 		totalEl.textContent = String(total);
 		daysEl.textContent = String(activeDays);
@@ -360,33 +684,41 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		}
 	}
 
-	function renderMonth() {
-		collapse(true);
-		const { y, m } = months[monthIdx];
-		const dayCount = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-		lead = (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7;
+	// Lay out one tile per date key; `leadCells` blanks come before the first.
+	function buildTiles(keys: string[], leadCells: number, gridRows: number) {
+		rows = gridRows;
+		lead = leadCells;
+		grid.style.setProperty("--rows", String(rows));
 
 		tiles.forEach((t) => t.remove());
-		tiles = Array.from({ length: dayCount }, (_, i) => {
+		tiles = keys.map((key, i) => {
 			const { col, row } = cellOf(i);
 			const btn = document.createElement("button");
 			btn.type = "button";
 			btn.className = "cal-tile";
-			btn.dataset.date = `${y}-${pad(m + 1)}-${pad(i + 1)}`;
+			btn.dataset.date = key;
 			btn.dataset.level = "0";
 			btn.setAttribute("aria-pressed", "false");
 			btn.style.gridColumn = String(col + 1);
 			btn.style.gridRow = String(row + 1);
 			const num = document.createElement("span");
 			num.className = "cal-day";
-			num.textContent = String(i + 1);
+			num.textContent = String(Number(key.slice(8)));
 			btn.append(num);
 			btn.addEventListener("focus", () => expand(i));
 			btn.addEventListener("blur", () => collapse());
-			btn.addEventListener("click", () => toggleDay(btn.dataset.date!));
+			btn.addEventListener("click", () => toggleDay(key));
 			return btn;
 		});
 		grid.prepend(...tiles);
+	}
+
+	function renderMonth() {
+		collapse(true);
+		const { y, m } = months[monthIdx];
+		const dayCount = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+		const keys = Array.from({ length: dayCount }, (_, i) => `${y}-${pad(m + 1)}-${pad(i + 1)}`);
+		buildTiles(keys, (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7, 6);
 
 		monthEl.textContent = new Date(Date.UTC(y, m, 1)).toLocaleDateString("en-MY", {
 			month: "long",
@@ -396,12 +728,376 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		prevBtn.disabled = monthIdx === 0;
 		nextBtn.disabled = monthIdx === months.length - 1;
 
+		periodKeys = keys;
+		periodLabel = monthEl.textContent ?? "";
 		recount();
+		renderChart();
+	}
+
+	function weekTitle(start: number) {
+		const a = new Date(start);
+		const b = new Date(start + 6 * DAY);
+		const mon = (d: Date) => d.toLocaleDateString("en-MY", { month: "short", timeZone: "UTC" });
+		const year = b.getUTCFullYear();
+		return a.getUTCMonth() === b.getUTCMonth()
+			? `${a.getUTCDate()} – ${b.getUTCDate()} ${mon(b)} ${year}`
+			: `${a.getUTCDate()} ${mon(a)} – ${b.getUTCDate()} ${mon(b)} ${year}`;
+	}
+
+	// Week mode: the same tile calendar, but only Monday to Sunday of one week.
+	function renderWeek() {
+		collapse(true);
+		const keys = Array.from({ length: 7 }, (_, i) => toKey(weekStart + i * DAY));
+		buildTiles(keys, 0, 1);
+
+		monthEl.textContent = weekTitle(weekStart);
+		prevBtn.disabled = weekStart <= firstWeek;
+		nextBtn.disabled = weekStart >= lastWeek;
+
+		periodKeys = keys;
+		periodLabel = monthEl.textContent ?? "";
+		recount();
+		renderChart();
+	}
+
+	function buildWeekDay(key: string, scale: number, compact: boolean, showLabel: boolean): HTMLButtonElement {
+		const items = byDay.get(key) ?? [];
+		const perCategory = new Map<string, number>();
+		items.forEach((a) => perCategory.set(a.category, (perCategory.get(a.category) ?? 0) + 1));
+
+		const d = new Date(`${key}T00:00:00+08:00`);
+		const weekday = d.toLocaleDateString("en-MY", { weekday: "short", timeZone: "Asia/Kuching" });
+		const breakdown = CATEGORY_ORDER.filter((c) => perCategory.has(c))
+			.map((c) => `${categoryMeta(c).label} ${perCategory.get(c)}`)
+			.join(", ");
+
+		const btn = document.createElement("button");
+		btn.type = "button";
+		btn.className = "cal-wk-day";
+		btn.dataset.date = key;
+		btn.setAttribute("aria-pressed", "false");
+		const summary = `${weekday} ${Number(key.slice(8))}: ${items.length} article${items.length === 1 ? "" : "s"}`;
+		btn.setAttribute("aria-label", breakdown ? `${summary} (${breakdown})` : summary);
+		btn.title = breakdown ? `${summary} — ${breakdown}` : summary;
+
+		const num = document.createElement("div");
+		num.className = "cal-wk-num";
+		num.textContent = items.length ? String(items.length) : "";
+
+		const track = document.createElement("div");
+		track.className = "cal-wk-track";
+		// Segments stack bottom-up in category order, sized by flex-grow (so the track
+		// can stretch to any height); a spacer takes up the unused top part.
+		CATEGORY_ORDER.forEach((c) => {
+			const n = perCategory.get(c);
+			if (!n) return;
+			const seg = document.createElement("div");
+			seg.className = `cal-wk-seg ${categoryMeta(c).bar}`;
+			seg.style.flexGrow = "0";
+			track.append(seg);
+			requestAnimationFrame(() => requestAnimationFrame(() => (seg.style.flexGrow = String(n))));
+		});
+		const spacer = document.createElement("div");
+		spacer.className = "cal-wk-spacer";
+		spacer.style.flexGrow = String(Math.max(scale - items.length, 0));
+		track.append(spacer);
+
+		const label = document.createElement("div");
+		label.className = "cal-wk-label";
+		if (showLabel) {
+			const date = document.createElement("b");
+			date.textContent = String(Number(key.slice(8)));
+			if (compact) label.append(date);
+			else label.append(weekday, date);
+		}
+
+		btn.append(num, track, label);
+		btn.addEventListener("click", () => toggleDay(key));
+		return btn;
+	}
+
+	// Vertical bar chart of the week: each day's articles stacked by category. It
+	// follows the filters -- the category filter narrows the bars (and rescales
+	// them), and a picked day is highlighted while the others recede.
+	function renderChart() {
+		const keys = periodKeys;
+		const isLine = chartType === "line";
+		chartEl.hidden = isLine;
+		lineEl.hidden = !isLine;
+		[chartBarBtn, chartLineBtn].forEach((b) => {
+			const on = (b === chartLineBtn) === isLine;
+			b.classList.toggle("active", on);
+			b.setAttribute("aria-pressed", String(on));
+		});
+
+		if (isLine) {
+			renderLine(keys);
+		} else {
+			const compact = keys.length > 7;
+			const scale = Math.max(3, ...keys.map((k) => byDay.get(k)?.length ?? 0));
+			chartEl.style.setProperty("--n", String(keys.length));
+			chartEl.classList.toggle("compact", compact);
+			// Label every day in a week; every 5th day (1, 6, 11, ...) in a month.
+			chartEl.replaceChildren(...keys.map((k, i) => buildWeekDay(k, scale, compact, !compact || i % 5 === 0)));
+		}
+
+		const category = getFilter().category;
+		captionEl.textContent = `${periodLabel} · ${category ? categoryMeta(category).label : "All categories"}`;
 		markSelected(getFilter().date);
+	}
+
+	// A "nice" y-axis for whole-number counts: the step is 1, 2, 5, 10, ... chosen so
+	// there are about 3-5 gridlines, and the top is the next multiple of the step
+	// (max 3 -> 0,1,2,3 ; max 6 -> 0,2,4,6 ; max 12 -> 0,5,10,15).
+	function niceAxis(maxValue: number) {
+		const target = 4;
+		const raw = Math.max(maxValue, 1) / target;
+		const mag = 10 ** Math.floor(Math.log10(raw));
+		const step = Math.max(1, [1, 2, 5, 10].map((m) => m * mag).find((c) => c >= raw) ?? 10 * mag);
+		return { step, top: Math.ceil(Math.max(maxValue, 1) / step) * step };
+	}
+
+	const SVG_NS = "http://www.w3.org/2000/svg";
+	function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number> = {}) {
+		const node = document.createElementNS(SVG_NS, tag);
+		for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+		return node;
+	}
+
+	// Line chart of the period on screen (a week or a month), one line per
+	// category. byDay is already narrowed by the category filter, so with a
+	// category picked this collapses to a single line (with an area fill).
+	function renderLine(keys: string[]) {
+		const days = keys.length;
+		const W = 560;
+		const H = 230;
+		const STEP = W / days;
+		const TILE = STEP - (days > 7 ? 1 : 8); // width of each day's hover column
+		const TOP = 20;
+		const BOTTOM = H - 34;
+		const cx = (i: number) => i * STEP + STEP / 2;
+
+		const series = CATEGORY_ORDER.map((c) => ({
+			c,
+			counts: keys.map((k) => (byDay.get(k) ?? []).filter((a) => a.category === c).length),
+		})).filter((s) => s.counts.some((n) => n > 0));
+		const { step: tickStep, top: max } = niceAxis(Math.max(3, ...series.flatMap((s) => s.counts)));
+		const y = (v: number) => BOTTOM - (v / max) * (BOTTOM - TOP);
+
+		const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "cal-ln", role: "group", "aria-label": "Articles per day, line chart" });
+
+		// One clickable column per day, behind everything else.
+		const tip = document.createElement("div");
+		tip.className = "cal-ln-tip";
+		tip.hidden = true;
+		keys.forEach((key, i) => {
+			const hit = svg("rect", { x: i * STEP + (STEP - TILE) / 2, y: 0, width: TILE, height: H, rx: days > 7 ? 4 : 14, class: "cal-ln-hit", tabindex: 0, role: "button" });
+			hit.dataset.date = key;
+			const n = series.reduce((sum, s) => sum + s.counts[i], 0);
+			hit.setAttribute("aria-label", `${key}: ${n} article${n === 1 ? "" : "s"}`);
+			hit.setAttribute("aria-pressed", "false");
+			hit.addEventListener("click", () => toggleDay(key));
+			hit.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					toggleDay(key);
+				}
+			});
+			hit.addEventListener("pointerenter", () => showLineTip(tip, key, i, series, cx(i) / W));
+			hit.addEventListener("focus", () => showLineTip(tip, key, i, series, cx(i) / W));
+			hit.addEventListener("pointerleave", () => (tip.hidden = true));
+			hit.addEventListener("blur", () => (tip.hidden = true));
+			chart.append(hit);
+		});
+
+		// Gridlines and y-axis labels.
+		const ticks = Array.from({ length: Math.round(max / tickStep) + 1 }, (_, i) => i * tickStep);
+		ticks.forEach((t) => {
+			chart.append(
+				svg("line", {
+					x1: 0, x2: W, y1: y(t), y2: y(t),
+					class: "stroke-slate-300 dark:stroke-slate-700",
+					"stroke-width": 1,
+					"stroke-dasharray": t === 0 ? "0" : "3 4",
+					"pointer-events": "none",
+				}),
+			);
+			const label = svg("text", {
+				x: 2, y: y(t) - 5,
+				class: "fill-slate-400 dark:fill-slate-500",
+				"font-size": 11, "font-weight": 600,
+				"pointer-events": "none",
+			});
+			label.textContent = String(t);
+			chart.append(label);
+		});
+
+		// Day labels along the bottom.
+		keys.forEach((key, i) => {
+			const d = new Date(`${key}T00:00:00+08:00`);
+			// A week labels every day ("Mon 7"); a month only every 5th, by date.
+			if (days > 7 && i % 5 !== 0) return;
+			const label = svg("text", {
+				x: cx(i), y: H - 12,
+				"text-anchor": "middle",
+				class: "fill-slate-500 dark:fill-slate-400",
+				"font-size": 12, "font-weight": 600,
+				"pointer-events": "none",
+			});
+			label.textContent =
+				days > 7
+					? String(Number(key.slice(8)))
+					: `${d.toLocaleDateString("en-MY", { weekday: "short", timeZone: "Asia/Kuching" })} ${Number(key.slice(8))}`;
+			chart.append(label);
+		});
+
+		const drawn: SVGPathElement[] = [];
+		series.forEach(({ c, counts }) => {
+			const meta = categoryMeta(c);
+			const pts = counts.map((n, i) => [cx(i), y(n)] as const);
+			const line = pts.map(([x, yy], i) => `${i ? "L" : "M"}${x} ${yy}`).join(" ");
+
+			if (series.length === 1) {
+				chart.append(
+					svg("path", {
+						d: `${line} L${pts[days - 1][0]} ${BOTTOM} L${pts[0][0]} ${BOTTOM} Z`,
+						class: meta.fill, opacity: 0.14, stroke: "none", "pointer-events": "none",
+					}),
+				);
+			}
+			const path = svg("path", { d: line, pathLength: 1, class: `cal-ln-path ${meta.stroke}`, "pointer-events": "none" });
+			chart.append(path);
+			drawn.push(path);
+			counts.forEach((n, i) => {
+				if (!n) return;
+				chart.append(svg("circle", { cx: pts[i][0], cy: pts[i][1], r: days > 7 ? 3.5 : 5, class: `cal-ln-dot ${meta.fill}` }));
+			});
+		});
+
+		if (!series.length) {
+			const empty = svg("text", { x: W / 2, y: H / 2, "text-anchor": "middle", class: "fill-slate-400 dark:fill-slate-500", "font-size": 14, "font-weight": 600 });
+			empty.textContent = "No articles in this period";
+			chart.append(empty);
+		}
+
+		const parts: HTMLElement[] = [chart as unknown as HTMLElement];
+		if (series.length > 1) {
+			const legend = document.createElement("div");
+			legend.className = "mt-3 flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs font-medium text-slate-500 dark:text-slate-400";
+			series.forEach(({ c }) => {
+				const item = document.createElement("span");
+				item.className = "inline-flex items-center gap-1.5";
+				const dot = document.createElement("span");
+				dot.className = `h-2 w-2 rounded-full ${categoryMeta(c).dot}`;
+				item.append(dot, categoryMeta(c).label);
+				legend.append(item);
+			});
+			parts.push(legend);
+		}
+		lineEl.replaceChildren(...parts, tip);
+
+		// Draw the lines in on the next frame so the dash transition actually runs.
+		requestAnimationFrame(() => requestAnimationFrame(() => drawn.forEach((p) => p.classList.add("drawn"))));
+	}
+
+	function showLineTip(
+		tip: HTMLElement,
+		key: string,
+		i: number,
+		series: { c: string; counts: number[] }[],
+		xFrac: number,
+	) {
+		const d = new Date(`${key}T00:00:00+08:00`);
+		const total = series.reduce((sum, s) => sum + s.counts[i], 0);
+
+		const head = document.createElement("div");
+		head.className = "font-semibold";
+		head.textContent = d.toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuching" });
+		const sub = document.createElement("div");
+		sub.style.opacity = "0.7";
+		sub.textContent = total ? `${total} article${total === 1 ? "" : "s"}` : "No articles";
+		tip.replaceChildren(head, sub);
+
+		series.forEach((s) => {
+			if (!s.counts[i]) return;
+			const row = document.createElement("div");
+			row.style.display = "flex";
+			row.style.alignItems = "center";
+			row.style.gap = "0.4rem";
+			row.style.marginTop = "0.25rem";
+			const dot = document.createElement("span");
+			dot.className = `h-2 w-2 shrink-0 rounded-full ${categoryMeta(s.c).dot}`;
+			const label = document.createElement("span");
+			label.style.flex = "1";
+			label.textContent = categoryMeta(s.c).label;
+			const num = document.createElement("b");
+			num.textContent = String(s.counts[i]);
+			row.append(dot, label, num);
+			tip.append(row);
+		});
+
+		tip.hidden = false;
+		const cw = lineEl.clientWidth;
+		const left = Math.max(0, Math.min(xFrac * cw - tip.offsetWidth / 2, cw - tip.offsetWidth));
+		tip.style.left = `${left}px`;
+		tip.style.transform = "translateY(calc(-100% - 0.5rem))";
+	}
+
+	function stepWeek(delta: number) {
+		const next = weekStart + delta * 7 * DAY;
+		if (next < firstWeek || next > lastWeek) return;
+		weekStart = next;
+		render();
+	}
+
+	// Show the right view for the current mode.
+	function render() {
+		collapse(true);
+		const isWeek = mode === "week";
+		root.dataset.mode = mode;
+		[modeMonthBtn, modeWeekBtn].forEach((b) => {
+			const on = (b === modeWeekBtn) === isWeek;
+			b.classList.toggle("active", on);
+			b.setAttribute("aria-pressed", String(on));
+		});
+		prevBtn.setAttribute("aria-label", isWeek ? "Previous week" : "Previous month");
+		nextBtn.setAttribute("aria-label", isWeek ? "Next week" : "Next month");
+
+		if (isWeek) renderWeek();
+		else renderMonth();
+	}
+
+	// Carry the period across when switching, so you land on the same time.
+	function setMode(next: Mode) {
+		if (next === mode) return;
+		if (next === "week") {
+			// The selected day's week if there is one, else the last week of the month on screen.
+			const { y, m } = months[monthIdx];
+			const target = getFilter().date ? toMs(getFilter().date!) : Date.UTC(y, m + 1, 0);
+			weekStart = Math.min(lastWeek, Math.max(firstWeek, mondayOf(target)));
+		} else {
+			const d = new Date(weekStart + 3 * DAY);
+			const found = months.findIndex((mo) => mo.y === d.getUTCFullYear() && mo.m === d.getUTCMonth());
+			if (found >= 0) monthIdx = found;
+		}
+		mode = next;
+		try {
+			localStorage.setItem(MODE_KEY, mode);
+		} catch {
+			// storage blocked -- the toggle still works for this visit
+		}
+		render();
 	}
 
 	function markSelected(date: string | null) {
 		tiles.forEach((t) => t.setAttribute("aria-pressed", String(t.dataset.date === date)));
+		chartEl
+			.querySelectorAll<HTMLElement>(".cal-wk-day")
+			.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.date === date)));
+		chartEl.classList.toggle("has-sel", chartEl.querySelector('.cal-wk-day[aria-pressed="true"]') !== null);
+		lineEl
+			.querySelectorAll<SVGElement>(".cal-ln-hit")
+			.forEach((r) => r.setAttribute("aria-pressed", String(r.dataset.date === date)));
 		if (active !== null) ov.classList.toggle("selected", tiles[active].dataset.date === date);
 	}
 
@@ -410,7 +1106,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		setFilter({ date: getFilter().date === key ? null : key });
 	}
 
-	function fillOverlay(tile: HTMLElement) {
+	function fillOverlay(tile: HTMLElement, maxRows: number) {
 		const key = tile.dataset.date!;
 		const items = byDay.get(key) ?? [];
 		const d = new Date(`${key}T00:00:00+08:00`);
@@ -433,7 +1129,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		if (items.length) {
 			const perCategory = new Map<string, number>();
 			items.forEach((a) => perCategory.set(a.category, (perCategory.get(a.category) ?? 0) + 1));
-			const top = [...perCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+			const top = [...perCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, maxRows);
 
 			const list = document.createElement("ul");
 			list.className = "cal-ov-list";
@@ -460,7 +1156,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	function reflow(k: number) {
 		const { col, row } = cellOf(k);
 		const bc = Math.min(col, COLS - 2);
-		const br = Math.min(row, ROWS - 2);
+		const br = Math.min(row, rows - 2);
 		const claimed = new Set([br * COLS + bc, br * COLS + bc + 1, (br + 1) * COLS + bc, (br + 1) * COLS + bc + 1]);
 
 		const pos: { col: number; row: number }[] = [];
@@ -478,7 +1174,8 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	}
 
 	function expand(k: number) {
-		if (!canHover || !tiles[k]) return;
+		// Only the month view expands; the week view stays a plain row.
+		if (!canHover || mode !== "month" || !tiles[k]) return;
 		if (active === k) return;
 		clearTimeout(closeTimer);
 		active = k;
@@ -497,7 +1194,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		});
 		root.classList.add("reflowed");
 
-		fillOverlay(tiles[k]);
+		fillOverlay(tiles[k], t < 56 ? 2 : 3);
 		ov.dataset.level = tiles[k].dataset.level ?? "0";
 		ov.classList.toggle("selected", tiles[k].dataset.date === getFilter().date);
 
@@ -551,7 +1248,7 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	// sit under the pointer -- tiles are moving while a box is open, so hit-testing
 	// them would make the box jump around. Inside the open box, nothing changes.
 	grid.addEventListener("pointermove", (e) => {
-		if (!canHover || e.pointerType === "touch") return;
+		if (!canHover || mode !== "month" || e.pointerType === "touch") return;
 		const { t, step } = metrics();
 		const rect = grid.getBoundingClientRect();
 		const x = e.clientX - rect.left;
@@ -569,38 +1266,52 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 		const inGap = x - col * step > t || y - row * step > t;
 		const k = row * COLS + col - lead;
 		if (inGap) return;
-		if (col < 0 || col >= COLS || row < 0 || row >= ROWS || k < 0 || k >= tiles.length) {
+		if (col < 0 || col >= COLS || row < 0 || row >= rows || k < 0 || k >= tiles.length) {
 			collapse();
 			return;
 		}
 		expand(k);
 	});
 	grid.addEventListener("pointerleave", () => collapse());
+	// The grid is fluid, so an open box's pixel positions go stale if it resizes.
+	new ResizeObserver(() => collapse(true)).observe(grid);
 	ov.addEventListener("click", () => {
 		if (active !== null) toggleDay(tiles[active].dataset.date!);
 	});
 
-	prevBtn.addEventListener("click", () => {
-		if (monthIdx > 0) {
-			monthIdx -= 1;
-			renderMonth();
+	function stepMonth(delta: number) {
+		const next = monthIdx + delta;
+		if (next < 0 || next >= months.length) return;
+		monthIdx = next;
+		render();
+	}
+	// The arrows move by a week in Week mode and by a month otherwise.
+	prevBtn.addEventListener("click", () => (mode === "week" ? stepWeek(-1) : stepMonth(-1)));
+	nextBtn.addEventListener("click", () => (mode === "week" ? stepWeek(1) : stepMonth(1)));
+	modeMonthBtn.addEventListener("click", () => setMode("month"));
+	modeWeekBtn.addEventListener("click", () => setMode("week"));
+
+	function setChartType(next: ChartType) {
+		if (next === chartType) return;
+		chartType = next;
+		try {
+			localStorage.setItem(CHART_KEY, chartType);
+		} catch {
+			// storage blocked -- the toggle still works for this visit
 		}
-	});
-	nextBtn.addEventListener("click", () => {
-		if (monthIdx < months.length - 1) {
-			monthIdx += 1;
-			renderMonth();
-		}
-	});
+		renderChart();
+	}
+	chartBarBtn.addEventListener("click", () => setChartType("bar"));
+	chartLineBtn.addEventListener("click", () => setChartType("line"));
 
 	if (months.length) {
-		renderMonth();
+		render();
 		let lastCategory: string | null | undefined = getFilter().category;
 		subscribe((f) => {
 			if (f.category !== lastCategory) {
 				lastCategory = f.category;
 				collapse(true);
-				recount();
+				refresh();
 			}
 			markSelected(f.date);
 		});

@@ -19,9 +19,12 @@ import CategoryFilter from "../components/CategoryFilter.astro";
 
 	<section class="bg-white dark:bg-black">
 		<div class="mx-auto max-w-6xl px-6 pt-12 pb-16">
-			<div class="mb-14 grid grid-cols-1 items-stretch gap-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-10">
-				<ActivityCalendar />
+			<div class="mb-8">
 				<CategoryFilter />
+			</div>
+
+			<div class="mb-14 grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-8">
+				<ActivityCalendar />
 			</div>
 
 			<h2 class="font-display mb-8 text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-300">
